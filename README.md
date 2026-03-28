@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/readme/banner.svg" alt="Snap&amp;Sort — smart waste sorting" width="100%" />
+  <img src="docs/readme/banner.svg" alt="SmeChat — smart waste sorting" width="100%" />
 </p>
 
 <p align="center">
@@ -10,11 +10,11 @@
   <img src="https://img.shields.io/badge/Tailwind-4-38B2AC?logo=tailwindcss&logoColor=white" alt="Tailwind" />
 </p>
 
-# Snap&Sort
+# SmeChat
 
-**Snap&Sort** is a mobile-first web app for **household waste sorting**, focused on **Zagreb** (bin colours, collection calendar, useful locations). Users take a photo of waste, get a **category suggestion** powered by **Google Cloud Vision** (label detection mapped to local bin categories), learn where to dispose of it, and earn **points, badges, and per-type stats** — backed by **Supabase** authentication and profile data.
+**SmeChat** is a mobile-first web app for **household waste sorting**, focused on **Zagreb** (bin colours, collection calendar, useful locations). Users take a photo of waste, get a **category suggestion** powered by **Google Cloud Vision** (label detection mapped to local bin categories), learn where to dispose of it, and earn **points, badges, and per-type stats** — backed by **Supabase** authentication and profile data.
 
-> UI and UX are based on the [Snap&Sort Figma design](https://www.figma.com/design/WNyvu6PY8MPDS9oPJ0V7jg/Snap-Sort-App-Design).
+> Visual design started from the [Snap&amp;Sort Figma bundle](https://www.figma.com/design/WNyvu6PY8MPDS9oPJ0V7jg/Snap-Sort-App-Design); the shipped product is **SmeChat**.
 
 ---
 

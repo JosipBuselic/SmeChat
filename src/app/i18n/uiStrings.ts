@@ -446,7 +446,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
     },
     welcome: {
       titlePrefix: "Dobro došli u",
-      subtitle: "Vaš pomoćnik za recikliranje",
+      subtitle: "SmeChat — vaš pomoćnik za recikliranje",
       f1Title: "Brza procjena",
       f1Text: "Snimite otpad i odmah dobijete prijedlog kategorije",
       f2Title: "Nizovi dana",
@@ -494,7 +494,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
     },
     scan: {
       readyTitle: "Ready to recycle?",
-      readySubtitle: "Snap a photo and see which bin to use.",
+      readySubtitle: "Take a photo and see which bin to use.",
       analyzing: "Analyzing…",
       tapScan: "Tap to scan",
       quickTipsTitle: "Quick tips 💡",
@@ -656,9 +656,9 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
     },
     welcome: {
       titlePrefix: "Welcome to",
-      subtitle: "Your recycling assistant",
+      subtitle: "SmeChat — your recycling assistant",
       f1Title: "Quick sorting",
-      f1Text: "Snap waste and get a suggested category right away",
+      f1Text: "Photograph waste and get a suggested category right away",
       f2Title: "Streaks",
       f2Text: "Recycle daily and keep your streak",
       f3Title: "Rewards",

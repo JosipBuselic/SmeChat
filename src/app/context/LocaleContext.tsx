@@ -10,10 +10,16 @@ import {
 
 export type AppLocale = "hr" | "en";
 
-const STORAGE_KEY = "snap-sort-locale";
+const STORAGE_KEY = "smechat-locale";
 
 function readStoredLocale(): AppLocale {
   try {
+    const legacy = localStorage.getItem("snap-sort-locale");
+    if (legacy === "en" || legacy === "hr") {
+      localStorage.setItem(STORAGE_KEY, legacy);
+      localStorage.removeItem("snap-sort-locale");
+      return legacy;
+    }
     const v = localStorage.getItem(STORAGE_KEY);
     if (v === "en" || v === "hr") return v;
   } catch {

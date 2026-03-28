@@ -9,14 +9,23 @@ export function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem("snap-sort-welcome");
+    try {
+      const legacy = localStorage.getItem("snap-sort-welcome");
+      if (legacy === "true") {
+        localStorage.setItem("smechat-welcome", "true");
+        localStorage.removeItem("snap-sort-welcome");
+      }
+    } catch {
+      /* ignore */
+    }
+    const hasSeenWelcome = localStorage.getItem("smechat-welcome");
     if (!hasSeenWelcome) {
       setIsOpen(true);
     }
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem("snap-sort-welcome", "true");
+    localStorage.setItem("smechat-welcome", "true");
     setIsOpen(false);
   };
 
