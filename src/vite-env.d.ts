@@ -5,7 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY: string;
   /** Optional: Google AI key for EKO Asistent (Gemini). */
   readonly VITE_GEMINI_API_KEY?: string;
-  /** Optional override, e.g. gemini-2.0-flash */
+  /** Optional override; default first try is gemini-2.5-flash (then flash-lite, 1.5-flash). */
   readonly VITE_GEMINI_MODEL?: string;
   /** Optional: Maps JavaScript API key for Leaflet basemap (Google). Without it, the map uses OpenStreetMap. */
   readonly VITE_GOOGLE_MAPS_API_KEY?: string;
