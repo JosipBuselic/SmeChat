@@ -102,26 +102,8 @@ export function UserStatsProvider({ children }: { children: ReactNode }) {
       const delta = WASTE_TYPE_POINTS[wasteType] ?? 10;
 
       let patch: { streak: number; points: number; sorted_items_count: number } | null = null;
-
-      const { data, error } = await supabase.rpc("record_user_scan", {
-        p_points_add: delta,
-      });
-
-      if (!error && data) {
-        const d = data as RecordScanRpcRow;
-        if (d.ok) {
-          patch = {
-            streak: d.streak ?? 0,
-            points: d.points ?? 0,
-            sorted_items_count: d.sorted_items_count ?? 0,
-          };
-        }
-      }
-
-      if (!patch) {
-        if (error) {
-          console.warn("record_user_scan RPC failed, trying direct update:", error.message);
-        }
+      
+      try {
         await upsertPublicUserIdentity(supabase, user);
         const sel = await supabase
           .from("users")
@@ -150,6 +132,9 @@ export function UserStatsProvider({ children }: { children: ReactNode }) {
           toast.error(up.error.message);
           return null;
         }
+      } catch (err) {
+        console.error("Error during scan update fallback:", err);
+        return null;
       }
 
       const base = userStatsFromDbRow({

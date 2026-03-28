@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_GEMINI_MODEL?: string;
   /** Optional: Maps JavaScript API key for Leaflet basemap (Google). Without it, the map uses OpenStreetMap. */
   readonly VITE_GOOGLE_MAPS_API_KEY?: string;
+  /** Optional: Google Cloud Vision API Key for classifying waste from images */
+  readonly VITE_GOOGLE_VISION_API_KEY?: string;
 }
 
 interface ImportMeta {
