@@ -41,6 +41,36 @@ function kindStyle(kind: MapFacility["kind"]) {
   }
 }
 
+/** Tailwind/flex layouts often leave the map at 0×0 until after paint; Leaflet needs a resize. */
+function MapInvalidateSize() {
+  const map = useMap();
+  const container = map.getContainer();
+  useEffect(() => {
+    let cancelled = false;
+    const run = () => {
+      if (cancelled) return;
+      map.invalidateSize();
+    };
+    const id = requestAnimationFrame(() => {
+      run();
+      requestAnimationFrame(run);
+    });
+    const ro =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => {
+            requestAnimationFrame(run);
+          })
+        : null;
+    ro?.observe(container);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(id);
+      ro?.disconnect();
+    };
+  }, [map, container]);
+  return null;
+}
+
 function MapController({
   facilities,
   selectedId,
@@ -96,7 +126,10 @@ export function ZagrebFacilitiesMap({
 }: ZagrebFacilitiesMapProps) {
   const ui = useUIStrings();
   const m = ui.map;
-  const [useOsmBasemap, setUseOsmBasemap] = useState(!googleMapsApiKey);
+  /** With a Google key, show OSM until the JS API + mutant layer are ready (avoids a gray empty map). */
+  const [googleBasemapReady, setGoogleBasemapReady] = useState(false);
+  const [googleBasemapFailed, setGoogleBasemapFailed] = useState(false);
+  const showOsmTiles = !googleMapsApiKey || googleBasemapFailed || !googleBasemapReady;
 
   if (loading) {
     return (
@@ -116,11 +149,20 @@ export function ZagrebFacilitiesMap({
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom
       >
-        {!useOsmBasemap && googleMapsApiKey ? (
-          <GoogleMutantLayer apiKey={googleMapsApiKey} onLoadError={() => setUseOsmBasemap(true)} />
-        ) : (
+        {showOsmTiles ? (
           <TileLayer attribution={OSM_ATTRIBUTION} url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        )}
+        ) : null}
+        {googleMapsApiKey && !googleBasemapFailed ? (
+          <GoogleMutantLayer
+            apiKey={googleMapsApiKey}
+            onReady={() => setGoogleBasemapReady(true)}
+            onLoadError={() => {
+              setGoogleBasemapFailed(true);
+              setGoogleBasemapReady(false);
+            }}
+          />
+        ) : null}
+        <MapInvalidateSize />
         <MapController facilities={facilities} selectedId={selectedId} userPos={userPos} />
         {userPos && (
           <CircleMarker

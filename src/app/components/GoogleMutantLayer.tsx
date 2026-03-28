@@ -30,16 +30,20 @@ function registerGoogleMutant() {
 type Props = {
   apiKey: string;
   onLoadError?: () => void;
+  /** Called after the Google layer is added so OSM fallback can be removed. */
+  onReady?: () => void;
 };
 
 /**
  * Google Maps roadmap basemap for react-leaflet (official JS API + GridLayer.GoogleMutant).
  */
-export function GoogleMutantLayer({ apiKey, onLoadError }: Props) {
+export function GoogleMutantLayer({ apiKey, onLoadError, onReady }: Props) {
   const map = useMap();
   const layerRef = useRef<L.GridLayer | null>(null);
   const onLoadErrorRef = useRef(onLoadError);
+  const onReadyRef = useRef(onReady);
   onLoadErrorRef.current = onLoadError;
+  onReadyRef.current = onReady;
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +58,7 @@ export function GoogleMutantLayer({ apiKey, onLoadError }: Props) {
         });
         layerRef.current = layer;
         layer.addTo(map);
+        onReadyRef.current?.();
       })
       .catch(() => {
         if (!cancelled) onLoadErrorRef.current?.();

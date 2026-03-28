@@ -2,6 +2,15 @@
 @import './tailwind.css';
 @import './theme.css';
 
+/*
+ * Leaflet tiles/markers: Tailwind preflight sets img { max-width: 100% }, which breaks
+ * tile positioning and often results in a blank map.
+ */
+.leaflet-container img {
+  max-width: none !important;
+  height: auto;
+}
+
 /* Mobile-first styles for SmeChat */
 body {
   margin: 0;
