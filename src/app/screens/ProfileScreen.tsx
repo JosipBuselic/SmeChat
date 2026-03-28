@@ -1,12 +1,33 @@
 import React from "react";
+import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Zap, Award, TrendingUp, Trophy, Settings, Share2, Battery, Shirt } from "lucide-react";
+import {
+  Zap,
+  Award,
+  TrendingUp,
+  Trophy,
+  Settings,
+  Share2,
+  Battery,
+  Shirt,
+  LogOut,
+} from "lucide-react";
+import { toast } from "sonner";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { getUserStats, BADGE_INFO, WASTE_TYPE_POINTS } from "../utils/storage";
 import { Progress } from "../components/ui/progress";
+import { useAuth } from "../context/AuthContext";
 
 export function ProfileScreen() {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const stats = getUserStats();
+
+  const displayName =
+    user?.user_metadata?.full_name ??
+    user?.user_metadata?.name ??
+    user?.email?.split("@")[0] ??
+    "Eco Warrior";
   
   // Calculate progress to next level (every 100 points = 1 level)
   const currentLevel = Math.floor(stats.points / 100);
@@ -88,7 +109,10 @@ export function ProfileScreen() {
             <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 flex items-center justify-center text-4xl shadow-lg">
               🌍
             </div>
-            <h2 className="text-xl font-bold mb-1">Eco Warrior</h2>
+            <h2 className="text-xl font-bold mb-1">{displayName}</h2>
+            {user?.email ? (
+              <p className="text-sm opacity-80 mb-1 truncate max-w-[240px] mx-auto">{user.email}</p>
+            ) : null}
             <p className="text-sm opacity-90">Level {currentLevel}</p>
           </div>
           
@@ -309,6 +333,26 @@ export function ProfileScreen() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-md mx-auto px-4 mt-8">
+        <button
+          type="button"
+          onClick={() => {
+            void signOut()
+              .then(() => {
+                toast.success("Signed out");
+                navigate("/login", { replace: true });
+              })
+              .catch((e) => {
+                toast.error(e instanceof Error ? e.message : "Sign out failed");
+              });
+          }}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold shadow-sm hover:bg-gray-50 transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          Sign out
+        </button>
       </div>
       
       <BottomNavigation />

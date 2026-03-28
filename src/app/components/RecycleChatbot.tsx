@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle, X, Send } from "lucide-react";
+import { toast } from "sonner";
+import { getGeminiEcoReply, isGeminiConfigured } from "../lib/gemini";
 
 interface Message {
   id: string;
@@ -61,12 +63,15 @@ export function RecycleChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      text: "Bok! 👋 Ja sam vaš EKO asistent. Pošaljite mi pitanje o recikliranju ili odaberite neko od brzih pitanja ispod!",
+      text: isGeminiConfigured()
+        ? "Bok! 👋 Ja sam EKO asistent (Gemini). Pitajte me o recikliranju ili odaberite brzo pitanje."
+        : "Bok! 👋 Ja sam vaš EKO asistent. Pošaljite mi pitanje o recikliranju ili odaberite neko od brzih pitanja ispod!",
       sender: "bot",
       timestamp: new Date(),
     },
   ]);
   const [inputValue, setInputValue] = useState("");
+  const [awaitingReply, setAwaitingReply] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -75,32 +80,52 @@ export function RecycleChatbot() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, awaitingReply]);
 
   const handleSendMessage = (text?: string) => {
     const messageText = text || inputValue.trim();
-    if (!messageText) return;
+    if (!messageText || awaitingReply) return;
 
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       text: messageText,
       sender: "user",
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, userMessage]);
+    const withUser: Message[] = [...messages, userMessage];
+    setMessages(withUser);
     setInputValue("");
+    setAwaitingReply(true);
 
-    // Simulate bot typing and response
-    setTimeout(() => {
+    const transcript = withUser.map((m) => ({
+      sender: m.sender,
+      text: m.text,
+    }));
+
+    void (async () => {
+      let replyText: string;
+      try {
+        if (isGeminiConfigured()) {
+          replyText = await getGeminiEcoReply(transcript);
+        } else {
+          await new Promise((r) => setTimeout(r, 500));
+          replyText = getBotResponse(messageText);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Greška pri odgovoru";
+        toast.error(msg);
+        replyText = getBotResponse(messageText);
+      }
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: getBotResponse(messageText),
+        text: replyText,
         sender: "bot",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, botMessage]);
-    }, 800);
+      setAwaitingReply(false);
+    })();
   };
 
   const handleQuickReply = (reply: string) => {
@@ -176,10 +201,21 @@ export function RecycleChatbot() {
                         : "bg-white shadow-md text-gray-800"
                     }`}
                   >
-                    <p className="text-sm">{message.text}</p>
+                    <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                   </div>
                 </motion.div>
               ))}
+              {awaitingReply ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-start"
+                >
+                  <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-white shadow-md text-gray-500 text-sm">
+                    Pišem…
+                  </div>
+                </motion.div>
+              ) : null}
               <div ref={messagesEndRef} />
             </div>
 
@@ -189,8 +225,10 @@ export function RecycleChatbot() {
                 {QUICK_REPLIES.map((reply, index) => (
                   <button
                     key={index}
+                    type="button"
+                    disabled={awaitingReply}
                     onClick={() => handleQuickReply(reply)}
-                    className="flex-shrink-0 bg-white text-gray-700 text-xs px-3 py-2 rounded-full border border-gray-300 hover:bg-green-50 hover:border-green-300 transition-colors"
+                    className="flex-shrink-0 bg-white text-gray-700 text-xs px-3 py-2 rounded-full border border-gray-300 hover:bg-green-50 hover:border-green-300 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                   >
                     {reply}
                   </button>
@@ -205,13 +243,15 @@ export function RecycleChatbot() {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   placeholder="Pošalji poruku..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                  disabled={awaitingReply}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 text-sm disabled:opacity-60"
                 />
                 <button
+                  type="button"
                   onClick={() => handleSendMessage()}
-                  disabled={!inputValue.trim()}
+                  disabled={!inputValue.trim() || awaitingReply}
                   className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-500 text-white rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-shadow"
                 >
                   <Send className="w-5 h-5" />
