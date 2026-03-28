@@ -24,7 +24,6 @@
 |:---:|:---:|:---:|:---:|
 | ![Scan](docs/readme/feature-scan.png) | ![Map](docs/readme/feature-map.png) | ![Calendar](docs/readme/feature-calendar.png) | ![Profile](docs/readme/feature-profile.png) |
 
-Add real screenshots under `docs/screenshots/` (e.g. `scan.png`, `map.png`) and point the table `src` attributes to those files if you want photos in the README.
 
 ---
 
