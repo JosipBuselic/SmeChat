@@ -15,6 +15,11 @@ type AuthContextValue = {
   user: User | null;
   loading: boolean;
   signInWithOAuth: (provider: Provider) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (
+    email: string,
+    password: string,
+  ) => Promise<{ needsEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
   configured: boolean;
 };
@@ -64,6 +69,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }, []);
 
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    const supabase = getSupabase();
+    if (!supabase) return;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  }, []);
+
+  const signUpWithEmail = useCallback(async (email: string, password: string) => {
+    const supabase = getSupabase();
+    if (!supabase) return { needsEmailConfirmation: false };
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    });
+    if (error) throw error;
+    return { needsEmailConfirmation: !data.session };
+  }, []);
+
   const signOut = useCallback(async () => {
     const supabase = getSupabase();
     if (!supabase) return;
@@ -77,10 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       loading,
       signInWithOAuth,
+      signInWithEmail,
+      signUpWithEmail,
       signOut,
       configured: isSupabaseConfigured,
     }),
-    [session, loading, signInWithOAuth, signOut],
+    [session, loading, signInWithOAuth, signInWithEmail, signUpWithEmail, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
