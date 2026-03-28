@@ -6,15 +6,31 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   server: {
     proxy: {
-      '/api/zagreb': {
+      '/api/zagreb-proxy': {
         target: 'https://data.zagreb.hr',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/zagreb/, ''),
+        rewrite: (pathStr) => {
+          try {
+            const q = pathStr.split('?')[1]
+            const p = new URLSearchParams(q).get('p')
+            return p ? decodeURIComponent(p) : '/'
+          } catch {
+            return '/'
+          }
+        },
       },
-      '/api/arcgis': {
+      '/api/arcgis-proxy': {
         target: 'https://opendata.arcgis.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/arcgis/, ''),
+        rewrite: (pathStr) => {
+          try {
+            const q = pathStr.split('?')[1]
+            const p = new URLSearchParams(q).get('p')
+            return p ? decodeURIComponent(p) : '/'
+          } catch {
+            return '/'
+          }
+        },
       },
     },
   },

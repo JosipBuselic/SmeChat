@@ -2,8 +2,8 @@
  * Loads data from data.zagreb.hr (GeoJSON), static zeleni otoci (public/data/zeleni-otoci.geojson),
  * and recycling yards (ArcGIS).
  * Regenerate zeleni GeoJSON: `npm run build:zeleni` (see scripts/build-zeleni-geojson.mjs).
- * Dev: `vite.config` proxies `/api/zagreb` and `/api/arcgis`.
- * Prod (e.g. Vercel): `vercel.json` rewrites the same paths — data.zagreb.hr has no CORS for browsers.
+ * Dev: `vite.config` proxies `/api/zagreb-proxy` and `/api/arcgis-proxy` (query `p=` = upstream path).
+ * Prod: `/api/zagreb-proxy` and `/api/arcgis-proxy` (Vercel serverless) fetch upstream server-side — no browser CORS.
  */
 
 export const MAX_DISPLAYED_FACILITIES = 10;
@@ -25,11 +25,11 @@ const RECYCLING_YARDS_GEOJSON =
 const ZELENI_OTOCI_GEOJSON = "/data/zeleni-otoci.geojson";
 
 function dataZagrebBase(): string {
-  return "/api/zagreb";
+  return "/api/zagreb-proxy";
 }
 
 function arcgisBase(): string {
-  return "/api/arcgis";
+  return "/api/arcgis-proxy";
 }
 
 export type MapFacilityKind =
@@ -141,7 +141,7 @@ function parseCollection(text: string): GeoJsonCollection {
 }
 
 async function fetchGeoJson(path: string, base: string): Promise<GeoJsonCollection> {
-  const url = `${base}${path}`;
+  const url = `${base}?p=${encodeURIComponent(path)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
   return parseCollection(await res.text());
