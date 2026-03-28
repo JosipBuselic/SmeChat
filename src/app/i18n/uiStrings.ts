@@ -89,7 +89,6 @@ export type UIStrings = {
   };
   map: {
     title: string;
-    dataSubtitle: string;
     mapHintWithLocation: string;
     mapHintNoLocation: string;
     osmSuffix: string;
@@ -159,6 +158,7 @@ export type UIStrings = {
     placeholder: string;
     headerTitle: string;
     headerSub: string;
+    poweredByGemini: string;
     quickReplies: string[];
     errorReply: string;
   };
@@ -335,7 +335,6 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
     },
     map: {
       title: "Lokacije u blizini",
-      dataSubtitle: "Zagreb — otvoreni podaci (data.zagreb.hr)",
       mapHintWithLocation:
         "Vaša pozicija je na karti; popis je poredan prema udaljenosti od vas.",
       mapHintNoLocation:
@@ -412,6 +411,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       placeholder: "Pošalji poruku…",
       headerTitle: "EKO asistent",
       headerSub: "Uvijek dostupan",
+      poweredByGemini: "Powered by Gemini",
       quickReplies: [
         "Kako reciklirati plastiku?",
         "Gdje baciti baterije?",
@@ -519,7 +519,6 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
     },
     map: {
       title: "Nearby locations",
-      dataSubtitle: "Zagreb — open data (data.zagreb.hr)",
       mapHintWithLocation: "Your position is on the map; the list is sorted by distance from you.",
       mapHintNoLocation:
         "Location unavailable — sorted from the city centre. Tap Near me to try again.",
@@ -595,6 +594,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       placeholder: "Send a message…",
       headerTitle: "ECO assistant",
       headerSub: "Always here",
+      poweredByGemini: "Powered by Gemini",
       quickReplies: [
         "How do I recycle plastic?",
         "Where do batteries go?",

@@ -127,7 +127,6 @@ export function MapScreen() {
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-gray-900">{m.title}</h1>
-          <p className="text-sm text-gray-600 mt-1">{m.dataSubtitle}</p>
         </div>
       </div>
 
