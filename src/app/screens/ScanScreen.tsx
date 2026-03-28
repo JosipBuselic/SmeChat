@@ -7,14 +7,13 @@ import { SmeChatWordmark } from "../components/SmeChatWordmark";
 import { WelcomeModal } from "../components/WelcomeModal";
 import { RecycleChatbot } from "../components/RecycleChatbot";
 import { useUIStrings } from "../i18n/uiStrings";
-import { getUserStats } from "../utils/storage";
+import { useUserStats } from "../context/UserStatsContext";
 
 export function ScanScreen() {
   const navigate = useNavigate();
   const ui = useUIStrings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const stats = getUserStats();
   const { stats, loading: statsLoading } = useUserStats();
   
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
