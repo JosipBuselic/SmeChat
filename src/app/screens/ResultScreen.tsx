@@ -8,7 +8,13 @@ import { WasteExceptionModal } from "../components/WasteExceptionModal";
 import { useLocale } from "../context/LocaleContext";
 import { formatStr, useUIStrings } from "../i18n/uiStrings";
 import { getWasteCategory, WASTE_CATEGORIES } from "../utils/wasteData";
-import { updateStatsAfterScan, getUserStats, WASTE_TYPE_POINTS, type WasteTypeStats } from "../utils/storage";
+import {
+  updateStatsAfterScan,
+  getUserStats,
+  WASTE_TYPE_POINTS,
+  REWARD_INFO,
+  type WasteTypeStats,
+} from "../utils/storage";
 
 export function ResultScreen() {
   const { category } = useParams<{ category: string }>();
@@ -16,7 +22,7 @@ export function ResultScreen() {
   const { locale } = useLocale();
   const ui = useUIStrings();
   const [exceptionAcknowledged, setExceptionAcknowledged] = useState(false);
-  const [newBadge, setNewBadge] = useState<string | null>(null);
+  const [newRewardId, setNewRewardId] = useState<string | null>(null);
   const [pointsEarned, setPointsEarned] = useState(10);
 
   const categoryValid = Boolean(category && category in WASTE_CATEGORIES);
@@ -35,10 +41,8 @@ export function ResultScreen() {
     const earnedPoints = WASTE_TYPE_POINTS[wasteType] || 10;
     setPointsEarned(earnedPoints);
 
-    const earnedNewBadge = newStats.badges.find((badge) => !oldStats.badges.includes(badge));
-    if (earnedNewBadge) {
-      setNewBadge(earnedNewBadge);
-    }
+    const earned = newStats.rewards.find((r) => !oldStats.rewards.includes(r));
+    if (earned) setNewRewardId(earned);
   }, [categoryValid, category, navigate]);
 
   useEffect(() => {
@@ -179,17 +183,18 @@ export function ResultScreen() {
           </div>
         </motion.div>
 
-        {newBadge && (
+        {newRewardId && ui.rewards[newRewardId] && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-3xl shadow-lg p-6 mb-6 text-white"
+            className="mb-6 rounded-3xl bg-gradient-to-r from-amber-400 to-orange-500 p-6 text-white shadow-lg"
           >
             <div className="text-center">
-              <div className="text-4xl mb-2">🏆</div>
-              <p className="font-bold text-lg">{ui.result.newBadge}</p>
-              <p className="text-sm opacity-90 mt-1">{ui.result.badgeKeepGoing}</p>
+              <div className="mb-2 text-4xl">{REWARD_INFO[newRewardId]?.icon ?? "🎁"}</div>
+              <p className="text-lg font-bold">{ui.result.newReward}</p>
+              <p className="mt-1 text-base font-semibold opacity-95">{ui.rewards[newRewardId].name}</p>
+              <p className="mt-2 text-sm opacity-90">{ui.result.rewardKeepGoing}</p>
             </div>
           </motion.div>
         )}

@@ -168,8 +168,8 @@ export function ScanScreen() {
             <div className="text-xs text-gray-500 mt-1">{ui.scan.statStreak}</div>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">{stats.badges.length}</div>
-            <div className="text-xs text-gray-500 mt-1">{ui.scan.statBadges}</div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.rewards.length}</div>
+            <div className="text-xs text-gray-500 mt-1">{ui.scan.statRewards}</div>
           </div>
         </motion.div>
       </div>

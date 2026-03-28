@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Camera, Award, TrendingUp, Zap } from "lucide-react";
+import { X, Camera, Gift, TrendingUp, Zap } from "lucide-react";
 import { useUIStrings } from "../i18n/uiStrings";
 import { SmeChatWordmark } from "./SmeChatWordmark";
 
@@ -86,7 +86,7 @@ export function WelcomeModal() {
 
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Award className="w-6 h-6 text-yellow-600" />
+                  <Gift className="w-6 h-6 text-yellow-600" />
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1">{ui.welcome.f3Title}</h3>

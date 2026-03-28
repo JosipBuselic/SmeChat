@@ -6,6 +6,7 @@ import {
   Award,
   TrendingUp,
   Trophy,
+  Gift,
   Share2,
   LogOut,
   Menu,
@@ -22,20 +23,11 @@ import {
 } from "../components/ui/sheet";
 import { useLocale } from "../context/LocaleContext";
 import { formatStr, useUIStrings } from "../i18n/uiStrings";
-import { getUserStats, WASTE_TYPE_POINTS, BADGE_INFO } from "../utils/storage";
+import { getUserStats, WASTE_TYPE_POINTS, REWARD_INFO, PROFILE_REWARD_IDS } from "../utils/storage";
 import { Progress } from "../components/ui/progress";
 import { useAuth } from "../context/AuthContext";
 import { cn } from "../components/ui/utils";
 import { getWasteCategory } from "../utils/wasteData";
-
-const PROFILE_BADGE_IDS = [
-  "first-scan",
-  "eco-newbie",
-  "eco-warrior",
-  "eco-champion",
-  "week-streak",
-  "month-streak",
-] as const;
 
 export function ProfileScreen() {
   const navigate = useNavigate();
@@ -265,34 +257,39 @@ export function ProfileScreen() {
         </div>
 
         <div className="mb-6 rounded-2xl bg-white p-6 shadow-lg">
-          <h3 className="mb-4 flex items-center gap-2 font-bold text-gray-900">
-            <Trophy className="h-5 w-5 text-yellow-600" />
-            {ui.profile.achievements}
+          <h3 className="mb-1 flex items-center gap-2 font-bold text-gray-900">
+            <Gift className="h-5 w-5 text-amber-600" />
+            {ui.profile.rewardsTitle}
           </h3>
+          <p className="mb-4 text-sm text-gray-600">{ui.profile.rewardsSubtitle}</p>
 
-          <div className="grid grid-cols-3 gap-3">
-            {PROFILE_BADGE_IDS.map((badgeId) => {
-              const badge = ui.badges[badgeId];
-              const meta = BADGE_INFO[badgeId];
-              const isUnlocked = stats.badges.includes(badgeId);
-              if (!badge || !meta) return null;
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {PROFILE_REWARD_IDS.map((rewardId) => {
+              const reward = ui.rewards[rewardId];
+              const meta = REWARD_INFO[rewardId];
+              const isUnlocked = stats.rewards.includes(rewardId);
+              if (!reward || !meta) return null;
 
               return (
                 <motion.div
-                  key={badgeId}
-                  whileHover={{ scale: 1.05 }}
-                  className={`rounded-xl p-3 text-center ${
-                    isUnlocked ? "bg-gradient-to-br from-yellow-100 to-orange-100" : "bg-gray-100"
+                  key={rewardId}
+                  whileHover={{ scale: 1.02 }}
+                  className={`rounded-xl p-4 text-left ${
+                    isUnlocked ? "bg-gradient-to-br from-amber-50 to-orange-50 ring-1 ring-amber-200/60" : "bg-gray-50"
                   }`}
                 >
-                  <div className={`mb-1 text-3xl ${!isUnlocked ? "opacity-50 grayscale" : ""}`}>
-                    {meta.icon}
+                  <div className="mb-2 flex items-start gap-2">
+                    <span className={`text-2xl leading-none ${!isUnlocked ? "opacity-40 grayscale" : ""}`}>
+                      {meta.icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold text-gray-900">{reward.name}</div>
+                      <p className="mt-1 text-xs leading-relaxed text-gray-600">{reward.description}</p>
+                      {isUnlocked && (
+                        <div className="mt-2 text-xs font-semibold text-green-700">{ui.profile.unlocked}</div>
+                      )}
+                    </div>
                   </div>
-                  <div className="mb-1 text-xs font-semibold text-gray-900">{badge.name}</div>
-                  <div className="text-xs text-gray-600">{badge.description}</div>
-                  {isUnlocked && (
-                    <div className="mt-1 text-xs font-semibold text-green-600">{ui.profile.unlocked}</div>
-                  )}
                 </motion.div>
               );
             })}
