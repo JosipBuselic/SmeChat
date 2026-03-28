@@ -10,6 +10,60 @@ export interface WasteCategory {
   examples: string[];
 }
 
+/** Kratki savjet nakon klasifikacije — hrvatski, jednostavan tekst. */
+export interface WasteExceptionInfo {
+  title: string;
+  /** Jedan kratki odlomak: iznimka ili podsjetnik. */
+  message: string;
+}
+
+export const WASTE_EXCEPTIONS: Record<string, WasteExceptionInfo> = {
+  batteries: {
+    title: "Važno",
+    message:
+      "Baterije i e-otpad ne smiju u kućni otpad. Odnesi ih u trgovinu ili na sabirno mjesto.",
+  },
+  plastic: {
+    title: "Brzi savjet",
+    message:
+      "Jako prljav ili masan ambalažni otpad ne recikliraj — operi ga ili baci u miješani otpad.",
+  },
+  paper: {
+    title: "Brzi savjet",
+    message:
+      "Mokar ili masan papir (npr. pizza kutija) ne ide među čisti papir — u miješani otpad.",
+  },
+  glass: {
+    title: "Brzi savjet",
+    message:
+      "Ogledala, prozorsko staklo i keramika nisu ambalažno staklo — u miješani otpad, ne u zeleni.",
+  },
+  bio: {
+    title: "Brzi savjet",
+    message:
+      "Skini plastične naljepnice i sve što nije organsko. One idu u miješani otpad.",
+  },
+  textile: {
+    title: "Brzi savjet",
+    message:
+      "Mokro, pljesnivo ili jako zaprljano tekstilno često ne ide u kontejner — provjeri pravila ili miješani otpad.",
+  },
+  mixed: {
+    title: "Brzi savjet",
+    message:
+      "Prije bacanja u crni spremnik provjeri može li se još što odvojeno (plastika, papir, staklo).",
+  },
+};
+
+export function getWasteException(categoryId: string): WasteExceptionInfo {
+  const fallback: WasteExceptionInfo = {
+    title: "Brzi savjet",
+    message:
+      "Nisi siguran/na? Provjeri lokalna pravila — krivo sortiranje kvare cijelu skupinu.",
+  };
+  return WASTE_EXCEPTIONS[categoryId] ?? fallback;
+}
+
 export const WASTE_CATEGORIES: Record<string, WasteCategory> = {
   batteries: {
     id: "batteries",

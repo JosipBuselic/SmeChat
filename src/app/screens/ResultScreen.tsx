@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { CheckCircle, ArrowLeft, Sparkles } from "lucide-react";
+import { CheckCircle, ArrowLeft, Sparkles, Tag } from "lucide-react";
 import confetti from "canvas-confetti";
-import { toast } from "sonner";
 import { BottomNavigation } from "../components/BottomNavigation";
+import { WasteExceptionModal } from "../components/WasteExceptionModal";
 import { WASTE_CATEGORIES } from "../utils/wasteData";
-import { updateStatsAfterScan, getUserStats, BADGE_INFO, WASTE_TYPE_POINTS, type WasteTypeStats } from "../utils/storage";
+import { updateStatsAfterScan, getUserStats, WASTE_TYPE_POINTS, type WasteTypeStats } from "../utils/storage";
 
 export function ResultScreen() {
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [exceptionAcknowledged, setExceptionAcknowledged] = useState(false);
   const [newBadge, setNewBadge] = useState<string | null>(null);
   const [pointsEarned, setPointsEarned] = useState(10);
   
@@ -37,18 +37,24 @@ export function ResultScreen() {
     if (earnedNewBadge) {
       setNewBadge(earnedNewBadge);
     }
-    
-    // Trigger confetti
-    setShowConfetti(true);
-    setTimeout(() => {
+  }, [wasteInfo, navigate, category]);
+  
+  useEffect(() => {
+    setExceptionAcknowledged(false);
+  }, [category]);
+  
+  useEffect(() => {
+    if (!wasteInfo || !exceptionAcknowledged) return;
+    const t = window.setTimeout(() => {
       confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
         colors: ["#4ADE80", "#60A5FA", "#FCD34D"],
       });
-    }, 300);
-  }, [wasteInfo, navigate]);
+    }, 200);
+    return () => window.clearTimeout(t);
+  }, [wasteInfo, exceptionAcknowledged]);
   
   if (!wasteInfo) {
     return null;
@@ -56,6 +62,13 @@ export function ResultScreen() {
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-blue-50 pb-20">
+      {wasteInfo && (
+        <WasteExceptionModal
+          category={wasteInfo}
+          open={!exceptionAcknowledged}
+          onAcknowledge={() => setExceptionAcknowledged(true)}
+        />
+      )}
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
@@ -71,6 +84,26 @@ export function ResultScreen() {
       
       {/* Main Content */}
       <div className="max-w-md mx-auto px-4 py-8">
+        {/* Detected category — visible behind modal; repeated in modal for context */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 rounded-2xl border border-emerald-200/80 bg-white p-4 shadow-md ring-1 ring-emerald-100/80"
+        >
+          <div className="flex items-center gap-2 text-emerald-800">
+            <Tag className="h-5 w-5 shrink-0" aria-hidden />
+            <span className="text-xs font-bold uppercase tracking-wide text-emerald-800">Prepoznata kategorija</span>
+          </div>
+          <div className="mt-2 flex items-center gap-3">
+            <span className="text-4xl leading-none" aria-hidden>
+              {wasteInfo.icon}
+            </span>
+            <div>
+              <p className="text-xl font-bold text-gray-900">{wasteInfo.name}</p>
+              <p className="text-sm text-gray-600">Odmah slijedi kratki savjet prije odlaganja.</p>
+            </div>
+          </div>
+        </motion.div>
         {/* Success Animation */}
         <motion.div
           initial={{ scale: 0 }}
