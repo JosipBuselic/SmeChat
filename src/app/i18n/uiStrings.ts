@@ -85,13 +85,11 @@ export type UIStrings = {
     remindersTitle: string;
     remindersText: string;
     remindersBtn: string;
-    legendTitle: string;
     zoneLabel: string;
     /** `{n}` = 1–4 */
     zoneOption: string;
-    disclaimer: string;
     listTitle: string;
-    legendDoorNote: string;
+    listWeekEmpty: string;
     useMyLocation: string;
     locating: string;
     locationNoBrowser: string;
@@ -104,19 +102,16 @@ export type UIStrings = {
     yourAddress: string;
     zoneEstimateLine: string;
     zoneUncertainHint: string;
-    officialLinksTitle: string;
-    linkCistoca: string;
-    linkRazvrstaj: string;
-    linkMojOtpad: string;
-    photonNote: string;
-    cistocaWasteUrl: string;
-    razvrstajUrl: string;
-    mojOtpadUrl: string;
-    /** Naslov kartice: bio / plastika / miješani za lokaciju */
-    cistocaStreamsTitle: string;
-    cistocaStreamsSubtitle: string;
-    streamNextPickups: string;
-    streamNoDates: string;
+    scheduleByAddressTitle: string;
+    scheduleByAddressSubtitle: string;
+    addressSearchLabel: string;
+    addressSearchPlaceholder: string;
+    addressSearchLoading: string;
+    addressHitsEmpty: string;
+    addressFetchError: string;
+    clearOfficialAddress: string;
+    officialScheduleLoading: string;
+    zoneIgnoredWhenOfficial: string;
   };
   map: {
     title: string;
@@ -190,7 +185,6 @@ export type UIStrings = {
     placeholder: string;
     headerTitle: string;
     headerSub: string;
-    poweredByGeminiShort: string;
     quickReplies: string[];
     errorReply: string;
     /** {model} = e.g. gemini-2.5-flash */
@@ -358,7 +352,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
     },
     calendar: {
       title: "Raspored odvoza",
-      subtitle: "Lokacija ili zona — model odvoza za Zagreb; točan datum na Čistoći / Razvrstaj MojZG",
+      subtitle: "Lokacija ili zona — procjena odvoza za Zagreb",
       weekdays: ["Ned", "Pon", "Uto", "Sri", "Čet", "Pet", "Sub"],
       today: "Danas",
       tomorrow: "Sutra",
@@ -366,14 +360,10 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       remindersTitle: "Podsjetnici",
       remindersText: "Uključi obavijesti da ne propustiš dan odvoza (uskoro).",
       remindersBtn: "Uključi obavijesti",
-      legendTitle: "Vrste u kalendaru",
       zoneLabel: "Zona (kvart)",
       zoneOption: "Zona {n}",
-      disclaimer:
-        "Čistoća ne nudi javni API za raspored u aplikacijama. Ovdje: procjena iz tvoje lokacije (adresa s karte) i zone; za stvarni dan odvoza koristi poveznice ispod ili mojotpad.cistoca.hr.",
-      listTitle: "Dani s odvozom u ovom mjesecu",
-      legendDoorNote:
-        "Baterije i tekstil obično nisu na kućnom rasporedu — posebna sabirna mjesta i kontejneri.",
+      listTitle: "Odvoz ovaj tjedan",
+      listWeekEmpty: "Ovaj tjedan nema najavljenog odvoza za odabranu zonu ili adresu.",
       useMyLocation: "Koristi moju lokaciju",
       locating: "Učitavanje lokacije i adrese…",
       locationNoBrowser: "Preglednik ne podržava geolokaciju.",
@@ -382,25 +372,21 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       locationErrTimeout: "Isteklo je vrijeme za lokaciju. Pokušaj ponovno.",
       locationErrNetwork: "Mrežna greška pri određivanju adrese.",
       locationErrGeocode: "Nije pronađena adresa za ove koordinate.",
-      locationErrNotZagreb: "Čistoća u aplikaciji odnosi se na Zagreb — lokacija je izvan grada.",
+      locationErrNotZagreb: "Ova funkcija vrijedi za Zagreb — lokacija je izvan grada.",
       yourAddress: "Tvoja adresa (procjena)",
       zoneEstimateLine: "Zona {n} · {area}",
       zoneUncertainHint:
-        "Nismo prepoznali gradsku četvrt u podacima karte — odaberi zonu ručno ispod ili provjeri službeni raspored.",
-      officialLinksTitle: "Službeni izvori (točan raspored)",
-      linkCistoca: "Čistoća — usluge i informacije",
-      linkRazvrstaj: "Razvrstaj MojZG (Grad Zagreb)",
-      linkMojOtpad: "Moj otpad (Čistoća)",
-      photonNote:
-        "Adresa dolazi iz OpenStreetMapa (servis Photon). Čistoća nema javni API za raspored u pregledniku.",
-      cistocaWasteUrl: "https://www.cistoca.hr/usluge/odvojeno-skupljanje-otpada/1303",
-      razvrstajUrl: "https://www.zagreb.hr/aplikacija-razvrstaj-mojzg/155421",
-      mojOtpadUrl: "https://mojotpad.cistoca.hr/",
-      cistocaStreamsTitle: "Kućni odvoz za tvoju lokaciju (zona)",
-      cistocaStreamsSubtitle:
-        "Model po zonama kao kod Čistoće: smeđa (bio), žuta (plastika i metal), crna (miješani). Točan dan provjeri na poveznicama iznad ili u Razvrstaj MojZG.",
-      streamNextPickups: "Sljedeći dani odvoza",
-      streamNoDates: "Nema termina u ovom razdoblju.",
+        "Nismo prepoznali gradsku četvrt u podacima karte — odaberi zonu ručno ispod.",
+      scheduleByAddressTitle: "Raspored po adresi",
+      scheduleByAddressSubtitle: "Upiši ulicu i kućni broj za raspored vezan uz adresu.",
+      addressSearchLabel: "Ulica i kućni broj",
+      addressSearchPlaceholder: "npr. Ilica 1 ili Dugi dol 5",
+      addressSearchLoading: "Pretražujem adrese…",
+      addressHitsEmpty: "Nema pogodaka — probaj drugačije napisati ulicu.",
+      addressFetchError: "Nije moguće učitati raspored za ovu adresu.",
+      clearOfficialAddress: "Ukloni odabranu adresu",
+      officialScheduleLoading: "Učitavam raspored…",
+      zoneIgnoredWhenOfficial: "Zona se ne koristi dok je učitana adresa s popisa.",
     },
     map: {
       title: "Lokacije u blizini",
@@ -481,7 +467,6 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       placeholder: "Pošalji poruku…",
       headerTitle: "EKO asistent",
       headerSub: "Uvijek dostupan",
-      poweredByGeminiShort: "Powered by Gemini",
       quickReplies: [
         "Kako reciklirati plastiku?",
         "Gdje baciti baterije?",
@@ -579,7 +564,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
     },
     calendar: {
       title: "Collection schedule",
-      subtitle: "Location or zone — Zagreb model; exact dates on Čistoća / Razvrstaj MojZG",
+      subtitle: "Location or zone — collection estimate for Zagreb",
       weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
       today: "Today",
       tomorrow: "Tomorrow",
@@ -587,14 +572,10 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       remindersTitle: "Reminders",
       remindersText: "Turn on notifications so you never miss collection day (coming soon).",
       remindersBtn: "Enable notifications",
-      legendTitle: "Types in calendar",
       zoneLabel: "Zone (area)",
       zoneOption: "Zone {n}",
-      disclaimer:
-        "Čistoća does not publish a public API for in-app schedules. Here: estimate from your location (map address) and zone; for real collection days use the links below or mojotpad.cistoca.hr.",
-      listTitle: "Collection days this month",
-      legendDoorNote:
-        "Batteries and textiles are usually not on door-to-door schedules — use drop-off points and containers.",
+      listTitle: "Collection this week",
+      listWeekEmpty: "No collection scheduled this week for your zone or address.",
       useMyLocation: "Use my location",
       locating: "Getting location and address…",
       locationNoBrowser: "Your browser does not support geolocation.",
@@ -603,25 +584,20 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       locationErrTimeout: "Location request timed out. Try again.",
       locationErrNetwork: "Network error while resolving the address.",
       locationErrGeocode: "No address found for these coordinates.",
-      locationErrNotZagreb: "In-app Čistoća info targets Zagreb — your location seems outside the city.",
+      locationErrNotZagreb: "This feature is for Zagreb — your location seems outside the city.",
       yourAddress: "Your address (estimate)",
       zoneEstimateLine: "Zone {n} · {area}",
-      zoneUncertainHint:
-        "We could not map the area from map data — pick a zone below or check the official schedule.",
-      officialLinksTitle: "Official sources (exact schedule)",
-      linkCistoca: "Čistoća — services and information",
-      linkRazvrstaj: "Razvrstaj MojZG (City of Zagreb)",
-      linkMojOtpad: "Moj otpad (Čistoća)",
-      photonNote:
-        "Address comes from OpenStreetMap (Photon). Čistoća has no public browser API for collection dates.",
-      cistocaWasteUrl: "https://www.cistoca.hr/usluge/odvojeno-skupljanje-otpada/1303",
-      razvrstajUrl: "https://www.zagreb.hr/aplikacija-razvrstaj-mojzg/155421",
-      mojOtpadUrl: "https://mojotpad.cistoca.hr/",
-      cistocaStreamsTitle: "Door-side collection for your location (zone)",
-      cistocaStreamsSubtitle:
-        "Zone-based model like Čistoća: brown (bio), yellow (plastic & metal), black (mixed). Confirm exact days via the links above or Razvrstaj MojZG.",
-      streamNextPickups: "Next collection days",
-      streamNoDates: "No dates in this window.",
+      zoneUncertainHint: "We could not map the area from map data — pick a zone below.",
+      scheduleByAddressTitle: "Schedule by address",
+      scheduleByAddressSubtitle: "Enter street and house number for address-based collection days.",
+      addressSearchLabel: "Street and house number",
+      addressSearchPlaceholder: "e.g. Ilica 1 or Dugi dol 5",
+      addressSearchLoading: "Searching addresses…",
+      addressHitsEmpty: "No matches — try a different spelling.",
+      addressFetchError: "Could not load the schedule for this address.",
+      clearOfficialAddress: "Clear selected address",
+      officialScheduleLoading: "Loading schedule…",
+      zoneIgnoredWhenOfficial: "Zone is ignored while an address from search is loaded.",
     },
     map: {
       title: "Nearby locations",
@@ -701,7 +677,6 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       placeholder: "Send a message…",
       headerTitle: "ECO assistant",
       headerSub: "Always here",
-      poweredByGeminiShort: "Powered by Gemini",
       quickReplies: [
         "How do I recycle plastic?",
         "Where do batteries go?",

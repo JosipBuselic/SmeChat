@@ -19,9 +19,19 @@ const BASE_WEEK: Record<number, string[]> = {
 
 export const ZAGREB_ZONE_COUNT = 4;
 
-/** Kućni tokovi koje Čistoća najčešće skuplja od vrata (bez stakla/papira na zelenom otoku). */
-export const CISTOCA_HOME_STREAM_IDS = ["bio", "plastic", "mixed"] as const;
-export type CistocaHomeStreamId = (typeof CISTOCA_HOME_STREAM_IDS)[number];
+/** Samo ove kategorije prikazujemo u kalendaru (bez stakla i ostalog). */
+export const CALENDAR_CATEGORY_IDS = ["bio", "plastic", "paper", "mixed"] as const;
+export type CalendarCategoryId = (typeof CALENDAR_CATEGORY_IDS)[number];
+
+const CALENDAR_SET = new Set<string>(CALENDAR_CATEGORY_IDS);
+
+function filterCalendarCategories(categories: string[]): string[] {
+  return categories.filter((c) => CALENDAR_SET.has(c));
+}
+
+export function isCalendarCategory(id: string): boolean {
+  return CALENDAR_SET.has(id);
+}
 
 export function getCategoriesForZagrebDate(date: Date, zone: number): string[] {
   const z = Math.min(Math.max(zone, 1), ZAGREB_ZONE_COUNT);
@@ -29,7 +39,7 @@ export function getCategoriesForZagrebDate(date: Date, zone: number): string[] {
   const dow = date.getDay();
   const sourceDow = (dow - shift + 7) % 7;
   const cats = BASE_WEEK[sourceDow];
-  return cats ? [...cats] : [];
+  return filterCalendarCategories(cats ? [...cats] : []);
 }
 
 function toIsoDate(d: Date): string {
@@ -63,7 +73,7 @@ export function getZagrebCollectionRange(
  */
 export function getUpcomingPickupDatesForCategory(
   zone: number,
-  categoryId: CistocaHomeStreamId,
+  categoryId: CalendarCategoryId,
   start: Date,
   lookaheadDays: number,
   maxDates: number,
