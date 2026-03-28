@@ -178,7 +178,7 @@ export function RecycleChatbot() {
                   <h3 className="font-bold">{ui.chat.headerTitle}</h3>
                   <p className="text-xs opacity-90">{ui.chat.headerSub}</p>
                   {isGeminiConfigured() ? (
-                    <p className="text-[10px] opacity-75 mt-0.5 tracking-wide">{ui.chat.poweredByGemini}</p>
+                    <p className="text-[10px] opacity-75 mt-0.5 tracking-wide">{ui.chat.poweredByGeminiShort}</p>
                   ) : null}
                 </div>
               </div>

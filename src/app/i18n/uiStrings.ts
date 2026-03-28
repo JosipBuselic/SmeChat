@@ -190,7 +190,7 @@ export type UIStrings = {
     placeholder: string;
     headerTitle: string;
     headerSub: string;
-    poweredByGemini: string;
+    poweredByGeminiShort: string;
     quickReplies: string[];
     errorReply: string;
     /** {model} = e.g. gemini-2.5-flash */
@@ -481,7 +481,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       placeholder: "Pošalji poruku…",
       headerTitle: "EKO asistent",
       headerSub: "Uvijek dostupan",
-      poweredByGemini: "Powered by Gemini",
+      poweredByGeminiShort: "Powered by Gemini",
       quickReplies: [
         "Kako reciklirati plastiku?",
         "Gdje baciti baterije?",
@@ -701,7 +701,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       placeholder: "Send a message…",
       headerTitle: "ECO assistant",
       headerSub: "Always here",
-      poweredByGemini: "Powered by Gemini",
+      poweredByGeminiShort: "Powered by Gemini",
       quickReplies: [
         "How do I recycle plastic?",
         "Where do batteries go?",
