@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useLocation, type Location } from "react-router";
 import { motion } from "motion/react";
-import { Leaf } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { formatStr, useUIStrings } from "../i18n/uiStrings";
@@ -10,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Button } from "../components/ui/button";
+import { SmeChatWordmark } from "../components/SmeChatWordmark";
 
 function redirectPath(from: Location | undefined): string {
   const path = from?.pathname;
@@ -106,7 +106,13 @@ export function LoginScreen() {
   if (!configured) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-green-50 to-blue-50 px-6">
-        <Leaf className="w-14 h-14 text-green-600 mb-4" />
+        <SmeChatWordmark
+          as="div"
+          size="lg"
+          showLogo
+          layout="stacked"
+          className="mb-6 justify-center"
+        />
         <h1 className="text-xl font-bold text-gray-900 text-center mb-2">
           {ui.login.supabaseTitle}
         </h1>
@@ -136,12 +142,13 @@ export function LoginScreen() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm"
       >
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center shadow-lg">
-            <Leaf className="w-9 h-9 text-white" />
-          </div>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 text-center mb-1">Snap&Sort</h1>
+        <SmeChatWordmark
+          as="h1"
+          size="lg"
+          showLogo
+          layout="stacked"
+          className="mb-4 justify-center text-center"
+        />
         <p className="text-gray-600 text-center text-sm mb-6">
           {ui.login.tagline}
         </p>

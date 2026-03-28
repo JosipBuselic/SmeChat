@@ -6,7 +6,6 @@ export type UIStrings = {
     close: string;
   };
   scan: {
-    appTitle: string;
     readyTitle: string;
     readySubtitle: string;
     analyzing: string;
@@ -120,7 +119,7 @@ export type UIStrings = {
     toastSignUpFail: string;
   };
   welcome: {
-    title: string;
+    titlePrefix: string;
     subtitle: string;
     f1Title: string;
     f1Text: string;
@@ -198,7 +197,6 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       close: "Zatvori",
     },
     scan: {
-      appTitle: "Snap&Sort",
       readyTitle: "Spremni za recikliranje?",
       readySubtitle: "Snimite otpad i saznajte u koji spremnik ide.",
       analyzing: "Analiziram…",
@@ -314,7 +312,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       toastSignUpFail: "Registracija nije uspjela",
     },
     welcome: {
-      title: "Dobro došli u Snap&Sort!",
+      titlePrefix: "Dobro došli u",
       subtitle: "Vaš pomoćnik za recikliranje",
       f1Title: "Brza procjena",
       f1Text: "Snimite otpad i odmah dobijete prijedlog kategorije",
@@ -352,7 +350,6 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       close: "Close",
     },
     scan: {
-      appTitle: "Snap&Sort",
       readyTitle: "Ready to recycle?",
       readySubtitle: "Snap a photo and see which bin to use.",
       analyzing: "Analyzing…",
@@ -468,7 +465,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       toastSignUpFail: "Sign-up failed",
     },
     welcome: {
-      title: "Welcome to Snap&Sort!",
+      titlePrefix: "Welcome to",
       subtitle: "Your recycling assistant",
       f1Title: "Quick sorting",
       f1Text: "Snap waste and get a suggested category right away",

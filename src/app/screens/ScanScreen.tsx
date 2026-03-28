@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Camera, Sparkles, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { BottomNavigation } from "../components/BottomNavigation";
+import { SmeChatWordmark } from "../components/SmeChatWordmark";
 import { WelcomeModal } from "../components/WelcomeModal";
 import { RecycleChatbot } from "../components/RecycleChatbot";
 import { useUIStrings } from "../i18n/uiStrings";
@@ -48,8 +49,8 @@ export function ScanScreen() {
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">{ui.scan.appTitle}</h1>
+          <div className="flex items-center justify-between gap-2">
+            <SmeChatWordmark as="h1" size="md" showLogo className="min-w-0" />
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1 bg-orange-100 px-3 py-1 rounded-full">
                 <Zap className="w-4 h-4 text-orange-500" fill="currentColor" />

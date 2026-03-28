@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Camera, Award, TrendingUp, Zap } from "lucide-react";
 import { useUIStrings } from "../i18n/uiStrings";
+import { SmeChatWordmark } from "./SmeChatWordmark";
 
 export function WelcomeModal() {
   const ui = useUIStrings();
@@ -45,9 +46,21 @@ export function WelcomeModal() {
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="text-6xl mb-4">♻️</div>
-              <h2 className="text-3xl font-bold mb-2">{ui.welcome.title}</h2>
-              <p className="text-sm opacity-90">{ui.welcome.subtitle}</p>
+              <div className="mx-auto mb-4 flex w-full max-w-sm flex-col items-center gap-3">
+                <p className="text-center text-base font-semibold text-white drop-shadow-sm">
+                  {ui.welcome.titlePrefix}
+                </p>
+                <div className="rounded-2xl bg-white/90 px-6 py-5 shadow-md backdrop-blur-sm w-full max-w-[280px]">
+                  <SmeChatWordmark
+                    as="div"
+                    size="lg"
+                    showLogo
+                    layout="stacked"
+                    className="justify-center"
+                  />
+                </div>
+              </div>
+              <p className="text-sm text-white opacity-90">{ui.welcome.subtitle}</p>
             </div>
 
             <div className="p-6 space-y-4">
