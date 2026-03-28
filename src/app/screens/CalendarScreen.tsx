@@ -1,26 +1,35 @@
-import { Bell, ChevronLeft, ChevronRight, ExternalLink, MapPin } from "lucide-react";
+import { Bell, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { useLocale } from "../context/LocaleContext";
 import { formatStr, useUIStrings } from "../i18n/uiStrings";
 import type { CollectionDay } from "../utils/wasteData";
-import { getWasteCategory, WASTE_CATEGORIES } from "../utils/wasteData";
+import { getWasteCategory } from "../utils/wasteData";
 import {
   geolocationErrorToReason,
   resolveZagrebLocationForCalendar,
   type LocationResolveErr,
 } from "../utils/zagrebLocationZone";
 import {
-  CISTOCA_HOME_STREAM_IDS,
+  getCategoriesForZagrebDate,
   getMonthGridMeta,
-  getUpcomingPickupDatesForCategory,
   getZagrebMonthDays,
   ZAGREB_ZONE_COUNT,
 } from "../utils/zagrebCollection";
+import {
+  fetchRazvrstajAddressById,
+  formatRazvrstajAddressLabel,
+  getRazvrstajCategoriesForDate,
+  getRazvrstajMonthDays,
+  searchRazvrstajAddresses,
+  type RazvrstajAddressHit,
+  type RazvrstajScheduleRule,
+} from "../utils/razvrstajSchedule";
 
 const ZONE_STORAGE_KEY = "smechat-zagreb-zone";
 const ADDRESS_STORAGE_KEY = "smechat-calendar-address";
+const RAZVRSTAJ_ID_STORAGE_KEY = "smechat-razvrstaj-address-id";
 
 function readStoredZone(): number {
   try {
@@ -40,6 +49,36 @@ function readStoredAddress(): string | null {
   } catch {
     return null;
   }
+}
+
+function readStoredRazvrstajId(): string | null {
+  try {
+    const s = localStorage.getItem(RAZVRSTAJ_ID_STORAGE_KEY);
+    return s?.trim() ? s : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Ned–sub, usklađeno s redom dana u mreži kalendara. */
+function weekDatesFromSundayContaining(ymd: string): Date[] {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const local = new Date(y, m - 1, d);
+  const dow = local.getDay();
+  const start = new Date(local);
+  start.setDate(local.getDate() - dow);
+  return Array.from({ length: 7 }, (_, i) => {
+    const x = new Date(start);
+    x.setDate(start.getDate() + i);
+    return x;
+  });
+}
+
+function toIsoDateLocal(d: Date): string {
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${mo}-${day}`;
 }
 
 function messageForLocationFailure(reason: LocationResolveErr["reason"], ui: ReturnType<typeof useUIStrings>): string {
@@ -77,6 +116,58 @@ export function CalendarScreen() {
   const [locError, setLocError] = useState<string | null>(null);
   const [zoneUncertain, setZoneUncertain] = useState(false);
 
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressHits, setAddressHits] = useState<RazvrstajAddressHit[]>([]);
+  const [addressSearchLoading, setAddressSearchLoading] = useState(false);
+  const [razvrstajAddressId, setRazvrstajAddressId] = useState<string | null>(readStoredRazvrstajId);
+  const [razvrstajSchedules, setRazvrstajSchedules] = useState<RazvrstajScheduleRule[] | null>(null);
+  const [officialScheduleLoading, setOfficialScheduleLoading] = useState(() => !!readStoredRazvrstajId());
+  const [officialFetchError, setOfficialFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = readStoredRazvrstajId();
+    if (!id) {
+      setOfficialScheduleLoading(false);
+      return;
+    }
+    let cancel = false;
+    setOfficialScheduleLoading(true);
+    (async () => {
+      try {
+        const row = await fetchRazvrstajAddressById(id);
+        if (cancel) return;
+        if (!row?.schedules?.length) {
+          try {
+            localStorage.removeItem(RAZVRSTAJ_ID_STORAGE_KEY);
+          } catch {
+            /* ignore */
+          }
+          setRazvrstajAddressId(null);
+          setRazvrstajSchedules(null);
+          return;
+        }
+        setRazvrstajAddressId(id);
+        setRazvrstajSchedules(row.schedules);
+        setSavedAddress(formatRazvrstajAddressLabel(row));
+      } catch {
+        if (!cancel) {
+          try {
+            localStorage.removeItem(RAZVRSTAJ_ID_STORAGE_KEY);
+          } catch {
+            /* ignore */
+          }
+          setRazvrstajAddressId(null);
+          setRazvrstajSchedules(null);
+        }
+      } finally {
+        if (!cancel) setOfficialScheduleLoading(false);
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem(ZONE_STORAGE_KEY, String(zone));
@@ -93,6 +184,73 @@ export function CalendarScreen() {
       /* ignore */
     }
   }, [savedAddress]);
+
+  useEffect(() => {
+    try {
+      if (!razvrstajAddressId) localStorage.removeItem(RAZVRSTAJ_ID_STORAGE_KEY);
+      else localStorage.setItem(RAZVRSTAJ_ID_STORAGE_KEY, razvrstajAddressId);
+    } catch {
+      /* ignore */
+    }
+  }, [razvrstajAddressId]);
+
+  useEffect(() => {
+    const q = addressQuery.trim();
+    if (q.length < 2) {
+      setAddressHits([]);
+      return;
+    }
+    const t = window.setTimeout(() => {
+      (async () => {
+        setAddressSearchLoading(true);
+        try {
+          const hits = await searchRazvrstajAddresses(q);
+          setAddressHits(hits.slice(0, 14));
+        } catch {
+          setAddressHits([]);
+        } finally {
+          setAddressSearchLoading(false);
+        }
+      })();
+    }, 380);
+    return () => window.clearTimeout(t);
+  }, [addressQuery]);
+
+  const clearOfficialAddress = () => {
+    setRazvrstajAddressId(null);
+    setRazvrstajSchedules(null);
+    setOfficialFetchError(null);
+    setAddressQuery("");
+    setAddressHits([]);
+    try {
+      localStorage.removeItem(RAZVRSTAJ_ID_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const selectRazvrstajHit = async (hit: RazvrstajAddressHit) => {
+    setOfficialFetchError(null);
+    setOfficialScheduleLoading(true);
+    setAddressQuery("");
+    setAddressHits([]);
+    try {
+      const row = await fetchRazvrstajAddressById(hit.id);
+      if (!row?.schedules?.length) {
+        setOfficialFetchError(ui.calendar.addressFetchError);
+        return;
+      }
+      setRazvrstajAddressId(hit.id);
+      setRazvrstajSchedules(row.schedules);
+      setSavedAddress(formatRazvrstajAddressLabel(row));
+      setZoneUncertain(false);
+      setResolvedAreaLabel(row.cityDistrictName ?? row.districtName ?? hit.districtName ?? null);
+    } catch {
+      setOfficialFetchError(ui.calendar.addressFetchError);
+    } finally {
+      setOfficialScheduleLoading(false);
+    }
+  };
 
   const useMyLocation = () => {
     setLocError(null);
@@ -112,6 +270,13 @@ export function CalendarScreen() {
         if (!res.ok) {
           setLocError(messageForLocationFailure(res.reason, ui));
           return;
+        }
+        setRazvrstajAddressId(null);
+        setRazvrstajSchedules(null);
+        try {
+          localStorage.removeItem(RAZVRSTAJ_ID_STORAGE_KEY);
+        } catch {
+          /* ignore */
         }
         setSavedAddress(res.displayAddress);
         setResolvedAreaLabel(res.areaLabel);
@@ -135,19 +300,26 @@ export function CalendarScreen() {
 
   const { firstDayDow } = useMemo(() => getMonthGridMeta(year, monthIndex), [year, monthIndex]);
 
-  const monthDays = useMemo(
-    () => getZagrebMonthDays(year, monthIndex, zone),
-    [year, monthIndex, zone],
-  );
-
-  const listDays = useMemo(
-    () => monthDays.filter((d) => d.categories.length > 0),
-    [monthDays],
-  );
+  const monthDays = useMemo(() => {
+    if (razvrstajSchedules?.length) {
+      return getRazvrstajMonthDays(year, monthIndex, razvrstajSchedules);
+    }
+    return getZagrebMonthDays(year, monthIndex, zone);
+  }, [year, monthIndex, zone, razvrstajSchedules]);
 
   const todayYmd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  const categoryIds = Object.keys(WASTE_CATEGORIES);
+  const listWeekDays = useMemo(() => {
+    const dates = weekDatesFromSundayContaining(todayYmd);
+    return dates
+      .map((d) => {
+        const categories = razvrstajSchedules?.length
+          ? getRazvrstajCategoriesForDate(razvrstajSchedules, d)
+          : getCategoriesForZagrebDate(d, zone);
+        return { date: toIsoDateLocal(d), categories };
+      })
+      .filter((row) => row.categories.length > 0);
+  }, [todayYmd, razvrstajSchedules, zone]);
 
   const goPrevMonth = () => {
     setViewMonthStart((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
@@ -164,69 +336,68 @@ export function CalendarScreen() {
     return cells;
   }, [firstDayDow, monthDays]);
 
-  const streamPickupsByCategory = useMemo(() => {
-    if (!savedAddress) return null;
-    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const lookaheadDays = 120;
-    const maxDates = 12;
-    return {
-      bio: getUpcomingPickupDatesForCategory(zone, "bio", start, lookaheadDays, maxDates),
-      plastic: getUpcomingPickupDatesForCategory(zone, "plastic", start, lookaheadDays, maxDates),
-      mixed: getUpcomingPickupDatesForCategory(zone, "mixed", start, lookaheadDays, maxDates),
-    };
-  }, [savedAddress, zone, todayYmd]);
-
-  const formatStreamDate = (iso: string) =>
-    new Date(`${iso}T12:00:00`).toLocaleDateString(dateLocale, {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50 pb-20">
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-gray-900">{ui.calendar.title}</h1>
           <p className="text-sm text-gray-600 mt-1">{ui.calendar.subtitle}</p>
-          <p className="text-xs text-amber-800/90 mt-2 leading-relaxed">{ui.calendar.disclaimer}</p>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="bg-white rounded-2xl shadow-md p-4 mb-4 border border-gray-100">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            {ui.calendar.officialLinksTitle}
-          </h3>
-          <div className="flex flex-col gap-2">
-            <a
-              href={ui.calendar.cistocaWasteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm font-medium text-blue-700 hover:text-blue-900"
+          <h3 className="text-sm font-bold text-gray-900">{ui.calendar.scheduleByAddressTitle}</h3>
+          <p className="text-xs text-gray-600 mt-1 leading-relaxed">{ui.calendar.scheduleByAddressSubtitle}</p>
+          <label className="block text-xs font-semibold text-gray-500 mt-3 mb-1" htmlFor="razvrstaj-q">
+            {ui.calendar.addressSearchLabel}
+          </label>
+          <input
+            id="razvrstaj-q"
+            type="search"
+            autoComplete="street-address"
+            value={addressQuery}
+            onChange={(e) => setAddressQuery(e.target.value)}
+            placeholder={ui.calendar.addressSearchPlaceholder}
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400"
+          />
+          {addressSearchLoading ? (
+            <p className="text-xs text-gray-500 mt-2">{ui.calendar.addressSearchLoading}</p>
+          ) : null}
+          {officialFetchError ? (
+            <p className="text-xs text-red-600 mt-2" role="alert">
+              {officialFetchError}
+            </p>
+          ) : null}
+          {addressQuery.trim().length >= 2 && !addressSearchLoading && addressHits.length === 0 ? (
+            <p className="text-xs text-gray-500 mt-2">{ui.calendar.addressHitsEmpty}</p>
+          ) : null}
+          {addressHits.length > 0 ? (
+            <ul className="mt-2 max-h-48 overflow-y-auto rounded-xl border border-gray-100 divide-y divide-gray-100 bg-white">
+              {addressHits.map((hit) => (
+                <li key={hit.id}>
+                  <button
+                    type="button"
+                    disabled={officialScheduleLoading}
+                    onClick={() => selectRazvrstajHit(hit)}
+                    className="w-full text-left px-3 py-2.5 text-sm text-gray-900 hover:bg-green-50 disabled:opacity-50"
+                  >
+                    {formatRazvrstajAddressLabel(hit)}
+                    <span className="block text-[10px] text-gray-500 mt-0.5">{hit.boardName}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {razvrstajAddressId ? (
+            <button
+              type="button"
+              onClick={clearOfficialAddress}
+              className="mt-3 text-xs font-semibold text-gray-600 underline hover:text-gray-900"
             >
-              <ExternalLink className="w-4 h-4 shrink-0" />
-              {ui.calendar.linkCistoca}
-            </a>
-            <a
-              href={ui.calendar.razvrstajUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm font-medium text-blue-700 hover:text-blue-900"
-            >
-              <ExternalLink className="w-4 h-4 shrink-0" />
-              {ui.calendar.linkRazvrstaj}
-            </a>
-            <a
-              href={ui.calendar.mojOtpadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm font-medium text-blue-700 hover:text-blue-900"
-            >
-              <ExternalLink className="w-4 h-4 shrink-0" />
-              {ui.calendar.linkMojOtpad}
-            </a>
-          </div>
+              {ui.calendar.clearOfficialAddress}
+            </button>
+          ) : null}
         </div>
 
         <div className="bg-white rounded-2xl shadow-md p-4 mb-4">
@@ -239,7 +410,6 @@ export function CalendarScreen() {
             <MapPin className="w-5 h-5 shrink-0" />
             {locLoading ? ui.calendar.locating : ui.calendar.useMyLocation}
           </button>
-          <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">{ui.calendar.photonNote}</p>
           {locError && (
             <p className="text-xs text-red-600 mt-2" role="alert">
               {locError}
@@ -266,66 +436,28 @@ export function CalendarScreen() {
           )}
         </div>
 
-        {savedAddress && streamPickupsByCategory && (
-          <div className="bg-white rounded-2xl shadow-md p-4 mb-4 border border-emerald-200/80">
-            <h3 className="text-sm font-bold text-gray-900">{ui.calendar.cistocaStreamsTitle}</h3>
-            <p className="text-xs text-gray-600 mt-1 leading-relaxed">{ui.calendar.cistocaStreamsSubtitle}</p>
-            <div className="mt-4 space-y-4">
-              {CISTOCA_HOME_STREAM_IDS.map((streamId) => {
-                const cat = getWasteCategory(streamId, locale);
-                const dates = streamPickupsByCategory[streamId];
-                if (!cat) return null;
-                return (
-                  <div key={streamId} className="rounded-xl border border-gray-100 bg-gray-50/90 p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span
-                        className="w-3 h-3 rounded-full shrink-0 ring-2 ring-white shadow-sm"
-                        style={{ backgroundColor: cat.binColorHex }}
-                      />
-                      <span className="text-sm font-semibold text-gray-900">{cat.name}</span>
-                    </div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-1.5">
-                      {ui.calendar.streamNextPickups}
-                    </p>
-                    {dates.length === 0 ? (
-                      <p className="text-xs text-gray-500">{ui.calendar.streamNoDates}</p>
-                    ) : (
-                      <ul className="flex flex-wrap gap-1.5">
-                        {dates.map((iso) => (
-                          <li
-                            key={iso}
-                            className={`text-xs font-medium rounded-lg px-2 py-1 capitalize border ${
-                              iso === todayYmd
-                                ? "bg-green-50 border-green-400 text-green-900 ring-1 ring-green-300"
-                                : "text-gray-800 bg-white border-gray-200"
-                            }`}
-                          >
-                            {formatStreamDate(iso)}
-                            {iso === todayYmd ? ` · ${ui.calendar.todayBadge}` : ""}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         <div className="bg-white rounded-2xl shadow-md p-4 mb-4">
+          {officialScheduleLoading ? (
+            <p className="text-xs text-gray-600 mb-3">{ui.calendar.officialScheduleLoading}</p>
+          ) : null}
           <label className="block text-xs font-semibold text-gray-500 mb-1" htmlFor="zagreb-zone">
             {ui.calendar.zoneLabel}
+            {razvrstajSchedules?.length ? (
+              <span className="block font-normal text-[10px] text-gray-400 mt-0.5 normal-case">
+                {ui.calendar.zoneIgnoredWhenOfficial}
+              </span>
+            ) : null}
           </label>
           <select
             id="zagreb-zone"
             value={zone}
+            disabled={!!razvrstajSchedules?.length}
             onChange={(e) => {
               setZoneUncertain(false);
               setResolvedAreaLabel(null);
               setZone(Number(e.target.value));
             }}
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 disabled:opacity-50"
           >
             {Array.from({ length: ZAGREB_ZONE_COUNT }, (_, i) => i + 1).map((z) => (
               <option key={z} value={z}>
@@ -405,7 +537,10 @@ export function CalendarScreen() {
 
         <h3 className="text-sm font-semibold text-gray-800 mb-2 px-1">{ui.calendar.listTitle}</h3>
         <div className="space-y-3">
-          {listDays.map((day, index) => {
+          {listWeekDays.length === 0 ? (
+            <p className="text-sm text-gray-500 px-1 py-2">{ui.calendar.listWeekEmpty}</p>
+          ) : null}
+          {listWeekDays.map((day, index) => {
             const date = new Date(day.date + "T12:00:00");
             const dayName = date.toLocaleDateString(dateLocale, { weekday: "long" });
             const dayNumber = date.getDate();
@@ -501,27 +636,6 @@ export function CalendarScreen() {
             </div>
           </div>
         </motion.div>
-
-        <div className="mt-6 bg-white rounded-2xl shadow-sm p-4">
-          <h3 className="font-semibold text-gray-900 mb-3 text-sm">{ui.calendar.legendTitle}</h3>
-          <div className="space-y-2">
-            {categoryIds.map((id) => {
-              const category = getWasteCategory(id, locale);
-              if (!category) return null;
-              return (
-                <div key={category.id} className="flex items-center gap-3">
-                  <div
-                    className="w-4 h-4 rounded-full shrink-0"
-                    style={{ backgroundColor: category.binColorHex }}
-                  />
-                  <span className="text-sm text-gray-700">{category.name}</span>
-                  <span className="text-xs text-gray-500 ml-auto text-right">{category.binColor}</span>
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-xs text-gray-500 mt-3 leading-relaxed">{ui.calendar.legendDoorNote}</p>
-        </div>
       </div>
 
       <BottomNavigation />
