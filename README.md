@@ -32,7 +32,7 @@ Add real screenshots under `docs/screenshots/` (e.g. `scan.png`, `map.png`) and 
 
 - **Photo scan** — **Google Cloud Vision API** (`LABEL_DETECTION`); returned labels are mapped to app categories (paper, plastic, glass, bio, batteries, textile). Without a key, the app falls back to a simulated category for local testing.
 - **Result screen** — guidance aligned with **Zagreb-style** bins (including mixed / residual where relevant in copy).
-- **Interactive map** — **Leaflet**; optional **Google Maps** tile layer; green islands and related POIs.
+- **Interactive map** — **Leaflet** with **OpenStreetMap** tiles; green islands and related POIs.
 - **Collection calendar** — Zagreb-oriented schedule, links to official sources, optional **Razvrstaj MojZG** address lookup.
 - **Profile &amp; gamification** — points per type, streaks, badges; Supabase stores aggregates and `waste_by_type` after scans.
 - **ECO assistant** — optional **Google Gemini** chat for recycling questions.
@@ -49,7 +49,7 @@ Add real screenshots under `docs/screenshots/` (e.g. `scan.png`, `map.png`) and 
 | Backend / auth | Supabase (Auth, Postgres, RLS, RPC) |
 | Vision scan | Google Cloud Vision API |
 | Chat | Google Generative AI (Gemini) |
-| Map | Leaflet, react-leaflet, optional Google Maps mutant |
+| Map | Leaflet, react-leaflet, OpenStreetMap |
 
 ---
 
@@ -91,7 +91,7 @@ Copy `.env.example` to `.env` (`.env` is gitignored).
 | `VITE_GOOGLE_VISION_API_KEY` | no | Enables real scan classification via Vision API |
 | `VITE_GEMINI_API_KEY` | no | ECO assistant chat |
 | `VITE_GEMINI_MODEL` | no | Optional Gemini model override |
-| `VITE_GOOGLE_MAPS_API_KEY` | no | Google basemap on the map (otherwise OSM) |
+| `VITE_GOOGLE_MAPS_API_KEY` | no | Reserved; the map uses OpenStreetMap tiles only |
 
 **Note:** `VITE_*` values are embedded in the client bundle. For production, prefer a small backend proxy for API keys instead of exposing them in the browser.
 

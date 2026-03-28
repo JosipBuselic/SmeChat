@@ -39,9 +39,8 @@ export function MapScreen() {
   const { locale } = useLocale();
   const ui = useUIStrings();
   const m = ui.map;
-  const mapBasemapSuffix = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim()
-    ? m.googleMapsSuffix
-    : m.osmSuffix;
+  /** Basemap is always OpenStreetMap (Google Maps JS mutant was unreliable in the browser). */
+  const mapBasemapSuffix = m.osmSuffix;
 
   const [allFacilities, setAllFacilities] = useState<MapFacility[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
