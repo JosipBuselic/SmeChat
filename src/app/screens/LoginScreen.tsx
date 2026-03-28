@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Leaf } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
+import { formatStr, useUIStrings } from "../i18n/uiStrings";
 import type { Provider } from "@supabase/supabase-js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Input } from "../components/ui/input";
@@ -21,6 +22,7 @@ const MIN_PASSWORD_LEN = 6;
 export function LoginScreen() {
   const navigate = useNavigate();
   const location = useLocation();
+  const ui = useUIStrings();
   const {
     session,
     loading,
@@ -49,7 +51,7 @@ export function LoginScreen() {
     try {
       await signInWithOAuth(provider);
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Sign-in failed";
+      const message = e instanceof Error ? e.message : ui.login.toastSignInFail;
       toast.error(message);
     } finally {
       setSigningIn(null);
@@ -59,11 +61,11 @@ export function LoginScreen() {
   function validateEmailForm(): boolean {
     const trimmed = email.trim();
     if (!trimmed || !password) {
-      toast.error("Enter email and password.");
+      toast.error(ui.login.toastEmailPwd);
       return false;
     }
     if (password.length < MIN_PASSWORD_LEN) {
-      toast.error(`Password must be at least ${MIN_PASSWORD_LEN} characters.`);
+      toast.error(formatStr(ui.login.toastPwdLen, { n: MIN_PASSWORD_LEN }));
       return false;
     }
     return true;
@@ -76,7 +78,7 @@ export function LoginScreen() {
     try {
       await signInWithEmail(email.trim(), password);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Sign-in failed";
+      const message = err instanceof Error ? err.message : ui.login.toastSignInFail;
       toast.error(message);
     } finally {
       setEmailBusy(false);
@@ -90,11 +92,11 @@ export function LoginScreen() {
     try {
       const { needsEmailConfirmation } = await signUpWithEmail(email.trim(), password);
       if (needsEmailConfirmation) {
-        toast.success("Check your email to confirm your account, then sign in.");
+        toast.success(ui.login.toastConfirmEmail);
         setPassword("");
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Sign-up failed";
+      const message = err instanceof Error ? err.message : ui.login.toastSignUpFail;
       toast.error(message);
     } finally {
       setEmailBusy(false);
@@ -106,15 +108,9 @@ export function LoginScreen() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-green-50 to-blue-50 px-6">
         <Leaf className="w-14 h-14 text-green-600 mb-4" />
         <h1 className="text-xl font-bold text-gray-900 text-center mb-2">
-          Supabase not configured
+          {ui.login.supabaseTitle}
         </h1>
-        <p className="text-gray-600 text-center text-sm max-w-sm">
-          Add{" "}
-          <code className="text-xs bg-white/80 px-1 rounded">VITE_SUPABASE_URL</code> and{" "}
-          <code className="text-xs bg-white/80 px-1 rounded">VITE_SUPABASE_ANON_KEY</code>{" "}
-          to your <code className="text-xs bg-white/80 px-1 rounded">.env</code> file, then
-          restart the dev server.
-        </p>
+        <p className="text-gray-600 text-center text-sm max-w-sm">{ui.login.supabaseBody}</p>
       </div>
     );
   }
@@ -122,7 +118,7 @@ export function LoginScreen() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50 to-blue-50">
-        <p className="text-gray-600">Loading…</p>
+        <p className="text-gray-600">{ui.common.loading}</p>
       </div>
     );
   }
@@ -147,7 +143,7 @@ export function LoginScreen() {
         </div>
         <h1 className="text-2xl font-bold text-gray-900 text-center mb-1">Snap&Sort</h1>
         <p className="text-gray-600 text-center text-sm mb-6">
-          Sign in to scan waste, view your map, and track progress.
+          {ui.login.tagline}
         </p>
 
         <button
@@ -156,7 +152,7 @@ export function LoginScreen() {
           onClick={() => void handleOAuth("google")}
           className="w-full py-3.5 px-4 rounded-xl bg-white border border-gray-200 shadow-sm font-semibold text-gray-800 hover:bg-gray-50 disabled:opacity-60 transition-colors mb-6"
         >
-          {signingIn === "google" ? "Redirecting…" : "Continue with Google"}
+          {signingIn === "google" ? ui.login.googleRedirect : ui.login.google}
         </button>
 
         <div className="relative mb-6">
@@ -165,7 +161,7 @@ export function LoginScreen() {
           </div>
           <div className="relative flex justify-center text-xs">
             <span className="bg-gradient-to-b from-green-50 to-blue-50 px-2 text-gray-500">
-              or with email
+              {ui.login.orEmail}
             </span>
           </div>
         </div>
@@ -173,10 +169,10 @@ export function LoginScreen() {
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="w-full grid grid-cols-2 mb-4 h-auto p-1">
             <TabsTrigger value="signin" className="rounded-lg py-2">
-              Sign in
+              {ui.login.tabSignIn}
             </TabsTrigger>
             <TabsTrigger value="signup" className="rounded-lg py-2">
-              Create account
+              {ui.login.tabSignUp}
             </TabsTrigger>
           </TabsList>
 
@@ -184,7 +180,7 @@ export function LoginScreen() {
             <form onSubmit={(e) => void handleSignIn(e)} className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="signin-email" className="text-gray-700">
-                  Email
+                  {ui.login.email}
                 </Label>
                 <Input
                   id="signin-email"
@@ -198,7 +194,7 @@ export function LoginScreen() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="signin-password" className="text-gray-700">
-                  Password
+                  {ui.login.password}
                 </Label>
                 <Input
                   id="signin-password"
@@ -215,7 +211,7 @@ export function LoginScreen() {
                 className="w-full rounded-xl h-11 font-semibold"
                 disabled={emailBusy || signingIn !== null}
               >
-                {emailBusy ? "Signing in…" : "Sign in"}
+                {emailBusy ? ui.login.signInBusy : ui.login.signIn}
               </Button>
             </form>
           </TabsContent>
@@ -224,7 +220,7 @@ export function LoginScreen() {
             <form onSubmit={(e) => void handleSignUp(e)} className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="signup-email" className="text-gray-700">
-                  Email
+                  {ui.login.email}
                 </Label>
                 <Input
                   id="signup-email"
@@ -238,7 +234,7 @@ export function LoginScreen() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="signup-password" className="text-gray-700">
-                  Password
+                  {ui.login.password}
                 </Label>
                 <Input
                   id="signup-password"
@@ -249,23 +245,22 @@ export function LoginScreen() {
                   className="rounded-xl bg-white border-gray-200 h-11"
                   disabled={emailBusy}
                 />
-                <p className="text-xs text-gray-500">At least {MIN_PASSWORD_LEN} characters.</p>
+                <p className="text-xs text-gray-500">
+                  {formatStr(ui.login.minChars, { n: MIN_PASSWORD_LEN })}
+                </p>
               </div>
               <Button
                 type="submit"
                 className="w-full rounded-xl h-11 font-semibold"
                 disabled={emailBusy || signingIn !== null}
               >
-                {emailBusy ? "Creating account…" : "Create account"}
+                {emailBusy ? ui.login.signUpBusy : ui.login.signUp}
               </Button>
             </form>
           </TabsContent>
         </Tabs>
 
-        <p className="text-xs text-gray-500 text-center mt-6">
-          In Supabase: Authentication → Providers — enable Google and Email (and set Site URL /
-          redirect URLs).
-        </p>
+        <p className="text-xs text-gray-500 text-center mt-6">{ui.login.footerHint}</p>
       </motion.div>
     </div>
   );

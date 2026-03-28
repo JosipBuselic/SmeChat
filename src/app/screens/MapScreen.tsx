@@ -2,9 +2,13 @@ import { useState } from "react";
 import { MapPin, Navigation, Trash2, Recycle } from "lucide-react";
 import { motion } from "motion/react";
 import { BottomNavigation } from "../components/BottomNavigation";
-import { RECYCLING_LOCATIONS, WASTE_CATEGORIES } from "../utils/wasteData";
+import { useLocale } from "../context/LocaleContext";
+import { useUIStrings } from "../i18n/uiStrings";
+import { RECYCLING_LOCATIONS, getWasteCategory } from "../utils/wasteData";
 
 export function MapScreen() {
+  const { locale } = useLocale();
+  const ui = useUIStrings();
   const [selectedLocation, setSelectedLocation] = useState(RECYCLING_LOCATIONS[0]);
   
   return (
@@ -12,8 +16,8 @@ export function MapScreen() {
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Nearby Locations</h1>
-          <p className="text-sm text-gray-600 mt-1">Find recycling bins & centers</p>
+          <h1 className="text-2xl font-bold text-gray-900">{ui.map.title}</h1>
+          <p className="text-sm text-gray-600 mt-1">{ui.map.subtitle}</p>
         </div>
       </div>
       
@@ -22,8 +26,8 @@ export function MapScreen() {
         <div className="relative bg-gradient-to-br from-green-100 to-blue-100 h-64 flex items-center justify-center">
           <div className="text-center">
             <MapPin className="w-12 h-12 text-green-600 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">Zagreb, Croatia</p>
-            <p className="text-xs text-gray-500 mt-1">Interactive map view</p>
+            <p className="text-sm text-gray-600">{ui.map.mapCity}</p>
+            <p className="text-xs text-gray-500 mt-1">{ui.map.mapSoon}</p>
           </div>
           
           {/* Map markers simulation */}
@@ -61,10 +65,10 @@ export function MapScreen() {
       {/* Locations List */}
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-gray-900">All Locations</h2>
-          <button className="flex items-center gap-1 text-sm text-green-600 font-semibold">
+          <h2 className="font-bold text-gray-900">{ui.map.allLocations}</h2>
+          <button type="button" className="flex items-center gap-1 text-sm text-green-600 font-semibold">
             <Navigation className="w-4 h-4" />
-            Near Me
+            {ui.map.nearMe}
           </button>
         </div>
         
@@ -98,7 +102,8 @@ export function MapScreen() {
                   {/* Accepted waste types */}
                   <div className="flex flex-wrap gap-1">
                     {location.accepts.map((categoryId) => {
-                      const category = WASTE_CATEGORIES[categoryId];
+                      const category = getWasteCategory(categoryId, locale);
+                      if (!category) return null;
                       return (
                         <span
                           key={categoryId}
@@ -127,19 +132,19 @@ export function MapScreen() {
         
         {/* Legend */}
         <div className="mt-6 bg-white rounded-2xl shadow-sm p-4">
-          <h3 className="font-semibold text-gray-900 mb-3 text-sm">Legend</h3>
+          <h3 className="font-semibold text-gray-900 mb-3 text-sm">{ui.map.legendTitle}</h3>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
                 <Recycle className="w-4 h-4 text-green-600" />
               </div>
-              <span className="text-xs text-gray-600">Recycling Center</span>
+              <span className="text-xs text-gray-600">{ui.map.legendCenter}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Trash2 className="w-4 h-4 text-blue-600" />
               </div>
-              <span className="text-xs text-gray-600">Bin Station</span>
+              <span className="text-xs text-gray-600">{ui.map.legendBins}</span>
             </div>
           </div>
         </div>

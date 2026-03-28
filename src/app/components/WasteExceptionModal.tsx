@@ -7,6 +7,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
+import { useLocale } from "../context/LocaleContext";
+import { useUIStrings } from "../i18n/uiStrings";
 import { getWasteException, type WasteCategory } from "../utils/wasteData";
 import { cn } from "./ui/utils";
 
@@ -21,7 +23,9 @@ export function WasteExceptionModal({
   open,
   onAcknowledge,
 }: WasteExceptionModalProps) {
-  const info = getWasteException(category.id);
+  const { locale } = useLocale();
+  const ui = useUIStrings();
+  const info = getWasteException(category.id, locale);
 
   return (
     <AlertDialog
@@ -56,7 +60,7 @@ export function WasteExceptionModal({
             )}
             onClick={onAcknowledge}
           >
-            Razumijem
+            {ui.result.exceptionConfirm}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

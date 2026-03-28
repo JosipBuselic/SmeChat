@@ -1,7 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle, X, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useLocale } from "../context/LocaleContext";
+import { useUIStrings } from "../i18n/uiStrings";
 import { getGeminiEcoReply, isGeminiConfigured } from "../lib/gemini";
 
 interface Message {
@@ -10,13 +12,6 @@ interface Message {
   sender: "user" | "bot";
   timestamp: Date;
 }
-
-const QUICK_REPLIES = [
-  "Kako reciklirati plastiku?",
-  "Gdje baciti baterije?",
-  "Kada se prazne kontejneri?",
-  "Što je bio otpad?",
-];
 
 const BOT_RESPONSES: Record<string, string> = {
   "kako reciklirati plastiku": "Plastiku bacite u žutu kantu! 💛 Prije bacanja isperite bocu ili spremnik. Plastika se može reciklirati i postati novi proizvod!",
@@ -59,20 +54,27 @@ function getBotResponse(userMessage: string): string {
 }
 
 export function RecycleChatbot() {
+  const { locale } = useLocale();
+  const ui = useUIStrings();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      text: isGeminiConfigured()
-        ? "Bok! 👋 Ja sam EKO asistent (Gemini). Pitajte me o recikliranju ili odaberite brzo pitanje."
-        : "Bok! 👋 Ja sam vaš EKO asistent. Pošaljite mi pitanje o recikliranju ili odaberite neko od brzih pitanja ispod!",
-      sender: "bot",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [awaitingReply, setAwaitingReply] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const text = isGeminiConfigured() ? ui.chat.welcomeGemini : ui.chat.welcomeLocal;
+    setMessages((prev) => {
+      if (prev.length === 0) {
+        return [{ id: "welcome", text, sender: "bot", timestamp: new Date() }];
+      }
+      const [first, ...rest] = prev;
+      if (first?.id === "welcome") {
+        return [{ ...first, text }, ...rest];
+      }
+      return prev;
+    });
+  }, [locale, ui.chat.welcomeGemini, ui.chat.welcomeLocal]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -112,7 +114,7 @@ export function RecycleChatbot() {
           replyText = getBotResponse(messageText);
         }
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Greška pri odgovoru";
+        const msg = e instanceof Error ? e.message : ui.chat.errorReply;
         toast.error(msg);
         replyText = getBotResponse(messageText);
       }
@@ -173,8 +175,8 @@ export function RecycleChatbot() {
                   🌍
                 </div>
                 <div>
-                  <h3 className="font-bold">EKO Asistent</h3>
-                  <p className="text-xs opacity-90">Uvijek dostupan</p>
+                  <h3 className="font-bold">{ui.chat.headerTitle}</h3>
+                  <p className="text-xs opacity-90">{ui.chat.headerSub}</p>
                 </div>
               </div>
               <button
@@ -212,7 +214,7 @@ export function RecycleChatbot() {
                   className="flex justify-start"
                 >
                   <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-white shadow-md text-gray-500 text-sm">
-                    Pišem…
+                    {ui.chat.typing}
                   </div>
                 </motion.div>
               ) : null}
@@ -222,7 +224,7 @@ export function RecycleChatbot() {
             {/* Quick Replies */}
             <div className="px-4 py-2 bg-gray-50 border-t border-gray-200">
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {QUICK_REPLIES.map((reply, index) => (
+                {ui.chat.quickReplies.map((reply, index) => (
                   <button
                     key={index}
                     type="button"
@@ -244,7 +246,7 @@ export function RecycleChatbot() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                  placeholder="Pošalji poruku..."
+                  placeholder={ui.chat.placeholder}
                   disabled={awaitingReply}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 text-sm disabled:opacity-60"
                 />
