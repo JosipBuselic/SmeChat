@@ -1,62 +1,74 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { CheckCircle, ArrowLeft, Sparkles } from "lucide-react";
+import { CheckCircle, ArrowLeft, Sparkles, Tag } from "lucide-react";
 import confetti from "canvas-confetti";
-import { toast } from "sonner";
 import { BottomNavigation } from "../components/BottomNavigation";
-import { WASTE_CATEGORIES } from "../utils/wasteData";
-import { updateStatsAfterScan, getUserStats, BADGE_INFO, WASTE_TYPE_POINTS, type WasteTypeStats } from "../utils/storage";
+import { WasteExceptionModal } from "../components/WasteExceptionModal";
+import { useLocale } from "../context/LocaleContext";
+import { formatStr, useUIStrings } from "../i18n/uiStrings";
+import { getWasteCategory, WASTE_CATEGORIES } from "../utils/wasteData";
+import { updateStatsAfterScan, getUserStats, WASTE_TYPE_POINTS, type WasteTypeStats } from "../utils/storage";
 
 export function ResultScreen() {
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
-  const [showConfetti, setShowConfetti] = useState(false);
+  const { locale } = useLocale();
+  const ui = useUIStrings();
+  const [exceptionAcknowledged, setExceptionAcknowledged] = useState(false);
   const [newBadge, setNewBadge] = useState<string | null>(null);
   const [pointsEarned, setPointsEarned] = useState(10);
-  
-  const wasteInfo = category ? WASTE_CATEGORIES[category] : null;
-  
+
+  const categoryValid = Boolean(category && category in WASTE_CATEGORIES);
+  const wasteInfo = categoryValid && category ? getWasteCategory(category, locale) : null;
+
   useEffect(() => {
-    if (!wasteInfo) {
+    if (!categoryValid || !category) {
       navigate("/");
       return;
     }
-    
-    // Update stats with waste type
+
     const oldStats = getUserStats();
     const wasteType = category as keyof WasteTypeStats;
     const newStats = updateStatsAfterScan(wasteType);
-    
-    // Get points earned for this type
+
     const earnedPoints = WASTE_TYPE_POINTS[wasteType] || 10;
     setPointsEarned(earnedPoints);
-    
-    // Check for new badges
-    const earnedNewBadge = newStats.badges.find(badge => !oldStats.badges.includes(badge));
+
+    const earnedNewBadge = newStats.badges.find((badge) => !oldStats.badges.includes(badge));
     if (earnedNewBadge) {
       setNewBadge(earnedNewBadge);
     }
-    
-    // Trigger confetti
-    setShowConfetti(true);
-    setTimeout(() => {
+  }, [categoryValid, category, navigate]);
+
+  useEffect(() => {
+    setExceptionAcknowledged(false);
+  }, [category]);
+
+  useEffect(() => {
+    if (!wasteInfo || !exceptionAcknowledged) return;
+    const t = window.setTimeout(() => {
       confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
         colors: ["#4ADE80", "#60A5FA", "#FCD34D"],
       });
-    }, 300);
-  }, [wasteInfo, navigate]);
-  
+    }, 200);
+    return () => window.clearTimeout(t);
+  }, [wasteInfo, exceptionAcknowledged]);
+
   if (!wasteInfo) {
     return null;
   }
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-blue-50 pb-20">
-      {/* Header */}
+      <WasteExceptionModal
+        category={wasteInfo}
+        open={!exceptionAcknowledged}
+        onAcknowledge={() => setExceptionAcknowledged(true)}
+      />
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
           <button
@@ -64,14 +76,34 @@ export function ResultScreen() {
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span>Back</span>
+            <span>{ui.result.back}</span>
           </button>
         </div>
       </div>
-      
-      {/* Main Content */}
+
       <div className="max-w-md mx-auto px-4 py-8">
-        {/* Success Animation */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 rounded-2xl border border-emerald-200/80 bg-white p-4 shadow-md ring-1 ring-emerald-100/80"
+        >
+          <div className="flex items-center gap-2 text-emerald-800">
+            <Tag className="h-5 w-5 shrink-0" aria-hidden />
+            <span className="text-xs font-bold uppercase tracking-wide text-emerald-800">
+              {ui.result.detectedLabel}
+            </span>
+          </div>
+          <div className="mt-2 flex items-center gap-3">
+            <span className="text-4xl leading-none" aria-hidden>
+              {wasteInfo.icon}
+            </span>
+            <div>
+              <p className="text-xl font-bold text-gray-900">{wasteInfo.name}</p>
+              <p className="text-sm text-gray-600">{ui.result.detectedHint}</p>
+            </div>
+          </div>
+        </motion.div>
+
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -90,18 +122,19 @@ export function ResultScreen() {
             </motion.div>
           </div>
         </motion.div>
-        
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="text-center mb-8"
         >
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Great Job!</h2>
-          <p className="text-gray-600">You earned +{pointsEarned} points</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">{ui.result.greatJob}</h2>
+          <p className="text-gray-600">
+            {formatStr(ui.result.pointsEarned, { n: pointsEarned })}
+          </p>
         </motion.div>
-        
-        {/* Waste Category Card */}
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -112,10 +145,9 @@ export function ResultScreen() {
             <div className="text-6xl mb-3">{wasteInfo.icon}</div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">{wasteInfo.name}</h3>
           </div>
-          
-          {/* Bin Color */}
+
           <div className="mb-6">
-            <p className="text-sm text-gray-500 mb-2">Use this bin:</p>
+            <p className="text-sm text-gray-500 mb-2">{ui.result.useBin}</p>
             <div className="flex items-center gap-3">
               <div
                 className="w-16 h-16 rounded-2xl shadow-md"
@@ -123,19 +155,17 @@ export function ResultScreen() {
               />
               <div>
                 <p className="font-bold text-lg text-gray-900">{wasteInfo.binColor}</p>
-                <p className="text-sm text-gray-600">For {wasteInfo.name}</p>
+                <p className="text-sm text-gray-600">{ui.result.binForType}</p>
               </div>
             </div>
           </div>
-          
-          {/* Explanation */}
+
           <div className="bg-gray-50 rounded-2xl p-4">
             <p className="text-sm text-gray-700 leading-relaxed">{wasteInfo.explanation}</p>
           </div>
-          
-          {/* Examples */}
+
           <div className="mt-4">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Examples:</p>
+            <p className="text-sm font-semibold text-gray-700 mb-2">{ui.result.examples}</p>
             <div className="flex flex-wrap gap-2">
               {wasteInfo.examples.map((example, index) => (
                 <span
@@ -148,8 +178,7 @@ export function ResultScreen() {
             </div>
           </div>
         </motion.div>
-        
-        {/* New Badge Notification */}
+
         {newBadge && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -159,29 +188,28 @@ export function ResultScreen() {
           >
             <div className="text-center">
               <div className="text-4xl mb-2">🏆</div>
-              <p className="font-bold text-lg">New Badge Unlocked!</p>
-              <p className="text-sm opacity-90 mt-1">Keep up the great work!</p>
+              <p className="font-bold text-lg">{ui.result.newBadge}</p>
+              <p className="text-sm opacity-90 mt-1">{ui.result.badgeKeepGoing}</p>
             </div>
           </motion.div>
         )}
-        
-        {/* Action Buttons */}
+
         <div className="space-y-3">
           <button
             onClick={() => navigate("/")}
             className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-shadow"
           >
-            Scan Another Item
+            {ui.result.scanAnother}
           </button>
           <button
             onClick={() => navigate("/map")}
             className="w-full bg-white text-gray-700 font-semibold py-4 rounded-2xl shadow-md hover:shadow-lg transition-shadow"
           >
-            Find Nearest Bin
+            {ui.result.nearestBins}
           </button>
         </div>
       </div>
-      
+
       <BottomNavigation />
     </div>
   );

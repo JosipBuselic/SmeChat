@@ -1,14 +1,16 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import { Camera, Sparkles, Zap } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { WelcomeModal } from "../components/WelcomeModal";
 import { RecycleChatbot } from "../components/RecycleChatbot";
+import { useUIStrings } from "../i18n/uiStrings";
 import { getUserStats } from "../utils/storage";
 
 export function ScanScreen() {
   const navigate = useNavigate();
+  const ui = useUIStrings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const stats = getUserStats();
@@ -47,7 +49,7 @@ export function ScanScreen() {
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Snap&Sort</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{ui.scan.appTitle}</h1>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1 bg-orange-100 px-3 py-1 rounded-full">
                 <Zap className="w-4 h-4 text-orange-500" fill="currentColor" />
@@ -70,10 +72,10 @@ export function ScanScreen() {
           className="text-center mb-8"
         >
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Ready to Recycle?
+            {ui.scan.readyTitle}
           </h2>
           <p className="text-gray-600">
-            Snap a photo of your waste and we'll tell you where it goes!
+            {ui.scan.readySubtitle}
           </p>
         </motion.div>
         
@@ -121,7 +123,7 @@ export function ScanScreen() {
           />
           
           <p className="text-lg font-semibold text-gray-700">
-            {isProcessing ? "Analyzing..." : "Tap to Scan"}
+            {isProcessing ? ui.scan.analyzing : ui.scan.tapScan}
           </p>
         </motion.div>
         
@@ -132,19 +134,19 @@ export function ScanScreen() {
           transition={{ delay: 0.4 }}
           className="mt-12 bg-white rounded-2xl shadow-md p-6"
         >
-          <h3 className="font-bold text-gray-900 mb-4">Quick Tips 💡</h3>
+          <h3 className="font-bold text-gray-900 mb-4">{ui.scan.quickTipsTitle}</h3>
           <ul className="space-y-2 text-sm text-gray-600">
             <li className="flex items-start gap-2">
               <span className="text-green-500 mt-0.5">✓</span>
-              <span>Make sure the item is clearly visible</span>
+              <span>{ui.scan.tip1}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-500 mt-0.5">✓</span>
-              <span>Take the photo in good lighting</span>
+              <span>{ui.scan.tip2}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-500 mt-0.5">✓</span>
-              <span>Clean items before recycling</span>
+              <span>{ui.scan.tip3}</span>
             </li>
           </ul>
         </motion.div>
@@ -158,15 +160,15 @@ export function ScanScreen() {
         >
           <div className="bg-white rounded-xl shadow-sm p-4 text-center">
             <div className="text-2xl font-bold text-green-600">{stats.totalItems}</div>
-            <div className="text-xs text-gray-500 mt-1">Items Sorted</div>
+            <div className="text-xs text-gray-500 mt-1">{ui.scan.statSorted}</div>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">{stats.currentStreak}</div>
-            <div className="text-xs text-gray-500 mt-1">Day Streak</div>
+            <div className="text-xs text-gray-500 mt-1">{ui.scan.statStreak}</div>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4 text-center">
             <div className="text-2xl font-bold text-yellow-600">{stats.badges.length}</div>
-            <div className="text-xs text-gray-500 mt-1">Badges</div>
+            <div className="text-xs text-gray-500 mt-1">{ui.scan.statBadges}</div>
           </div>
         </motion.div>
       </div>

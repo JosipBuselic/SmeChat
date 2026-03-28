@@ -145,33 +145,33 @@ export function updateStatsAfterScan(wasteType?: keyof WasteTypeStats): UserStat
 
 export const BADGE_INFO: Record<string, { name: string; icon: string; description: string }> = {
   "first-scan": {
-    name: "First Steps",
+    name: "Prvi koraci",
     icon: "🌱",
-    description: "Completed your first scan",
+    description: "Završen prvi sken",
   },
   "eco-newbie": {
-    name: "Eco Newbie",
+    name: "Eko početnik",
     icon: "🌿",
-    description: "Sorted 10 items",
+    description: "Poredano 10 predmeta",
   },
   "eco-warrior": {
-    name: "Eco Warrior",
+    name: "Eko borac",
     icon: "🌳",
-    description: "Sorted 50 items",
+    description: "Poredano 50 predmeta",
   },
   "eco-champion": {
-    name: "Eco Champion",
+    name: "Eko prvak",
     icon: "🏆",
-    description: "Sorted 100 items",
+    description: "Poredano 100 predmeta",
   },
   "week-streak": {
-    name: "Week Warrior",
+    name: "Tjedni niz",
     icon: "🔥",
-    description: "7 day streak",
+    description: "7 dana zaredom",
   },
   "month-streak": {
-    name: "Month Master",
+    name: "Mjesečni niz",
     icon: "⭐",
-    description: "30 day streak",
+    description: "30 dana zaredom",
   },
 };

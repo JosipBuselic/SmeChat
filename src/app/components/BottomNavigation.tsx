@@ -1,15 +1,17 @@
 import { useNavigate, useLocation } from "react-router";
 import { Camera, Map, Calendar, User } from "lucide-react";
+import { useUIStrings } from "../i18n/uiStrings";
 
 export function BottomNavigation() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+  const ui = useUIStrings();
+
   const tabs = [
-    { path: "/", icon: Camera, label: "Scan" },
-    { path: "/map", icon: Map, label: "Map" },
-    { path: "/calendar", icon: Calendar, label: "Calendar" },
-    { path: "/profile", icon: User, label: "Profile" },
+    { path: "/", icon: Camera, label: ui.nav.scan },
+    { path: "/map", icon: Map, label: ui.nav.map },
+    { path: "/calendar", icon: Calendar, label: ui.nav.calendar },
+    { path: "/profile", icon: User, label: ui.nav.profile },
   ];
   
   return (

@@ -91,16 +91,16 @@ function buildModelCandidates(): string[] {
 export async function getGeminiEcoReply(messages: EcoChatTurn[]): Promise<string> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey?.length) {
-    throw new Error("VITE_GEMINI_API_KEY is not set");
+    throw new Error("VITE_GEMINI_API_KEY nije postavljen");
   }
 
   if (messages.length === 0) {
-    throw new Error("No messages");
+    throw new Error("Nema poruka");
   }
 
   const last = messages[messages.length - 1];
   if (last.sender !== "user") {
-    throw new Error("Last message must be from user");
+    throw new Error("Zadnja poruka mora biti od korisnika");
   }
 
   const prefix = messages.slice(0, -1);
