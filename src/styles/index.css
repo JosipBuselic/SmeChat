@@ -31,3 +31,24 @@ button, .no-select {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Leaflet: Tailwind preflight can shrink tile images */
+.leaflet-container img {
+  max-width: none !important;
+}
+
+/* Permanent “You” label on user location marker (#6d28d9 = marker stroke) */
+.leaflet-tooltip.user-location-label {
+  padding: 3px 9px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(109, 40, 217, 0.96);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+.leaflet-tooltip.user-location-label::before {
+  border-top-color: rgba(109, 40, 217, 0.96);
+}
