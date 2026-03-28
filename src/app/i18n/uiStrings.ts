@@ -92,6 +92,7 @@ export type UIStrings = {
     mapHintWithLocation: string;
     mapHintNoLocation: string;
     osmSuffix: string;
+    googleMapsSuffix: string;
     loadErrorTitle: string;
     loadErrorGeneric: string;
     binAccessTitle: string;
@@ -340,6 +341,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       mapHintNoLocation:
         "Lokacija nedostupna — poredano od središta grada. Dodirnite „U blizini“ za ponovni pokušaj.",
       osmSuffix: "· OpenStreetMap",
+      googleMapsSuffix: "· Google Maps",
       loadErrorTitle: "Greška podataka",
       loadErrorGeneric: "Učitavanje lokacija nije uspjelo",
       binAccessTitle: "Pristup spremnicima",
@@ -523,6 +525,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       mapHintNoLocation:
         "Location unavailable — sorted from the city centre. Tap Near me to try again.",
       osmSuffix: "· OpenStreetMap",
+      googleMapsSuffix: "· Google Maps",
       loadErrorTitle: "Data error",
       loadErrorGeneric: "Could not load locations",
       binAccessTitle: "Bin access",

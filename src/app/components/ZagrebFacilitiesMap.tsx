@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import L from "leaflet";
 import {
@@ -10,11 +10,14 @@ import {
   useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { GoogleMutantLayer } from "./GoogleMutantLayer";
 import { useUIStrings } from "../i18n/uiStrings";
 import { ZAGREB_CENTER, type MapFacility } from "../utils/zagrebOpenData";
 
 const OSM_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim() ?? "";
 
 /** Distinct from facility markers; shared with legend in MapScreen. */
 export const USER_LOCATION_MARKER = {
@@ -93,6 +96,7 @@ export function ZagrebFacilitiesMap({
 }: ZagrebFacilitiesMapProps) {
   const ui = useUIStrings();
   const m = ui.map;
+  const [useOsmBasemap, setUseOsmBasemap] = useState(!googleMapsApiKey);
 
   if (loading) {
     return (
@@ -112,7 +116,11 @@ export function ZagrebFacilitiesMap({
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom
       >
-        <TileLayer attribution={OSM_ATTRIBUTION} url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        {!useOsmBasemap && googleMapsApiKey ? (
+          <GoogleMutantLayer apiKey={googleMapsApiKey} onLoadError={() => setUseOsmBasemap(true)} />
+        ) : (
+          <TileLayer attribution={OSM_ATTRIBUTION} url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        )}
         <MapController facilities={facilities} selectedId={selectedId} userPos={userPos} />
         {userPos && (
           <CircleMarker

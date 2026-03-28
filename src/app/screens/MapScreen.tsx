@@ -39,6 +39,9 @@ export function MapScreen() {
   const { locale } = useLocale();
   const ui = useUIStrings();
   const m = ui.map;
+  const mapBasemapSuffix = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim()
+    ? m.googleMapsSuffix
+    : m.osmSuffix;
 
   const [allFacilities, setAllFacilities] = useState<MapFacility[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -149,7 +152,7 @@ export function MapScreen() {
 
       <div className="max-w-md mx-auto px-4">
         <p className="text-xs text-gray-500 mb-2 text-center">
-          {userPos ? m.mapHintWithLocation : m.mapHintNoLocation} {m.osmSuffix}
+          {userPos ? m.mapHintWithLocation : m.mapHintNoLocation} {mapBasemapSuffix}
         </p>
         <ZagrebFacilitiesMap
           facilities={displayed}
