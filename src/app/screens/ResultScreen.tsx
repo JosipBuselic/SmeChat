@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useLocation } from "react-router";
 import { motion } from "motion/react";
 import { CheckCircle, ArrowLeft, Sparkles, Tag } from "lucide-react";
 import confetti from "canvas-confetti";
@@ -8,11 +8,17 @@ import { WasteExceptionModal } from "../components/WasteExceptionModal";
 import { useLocale } from "../context/LocaleContext";
 import { formatStr, useUIStrings } from "../i18n/uiStrings";
 import { getWasteCategory, WASTE_CATEGORIES } from "../utils/wasteData";
-import { updateStatsAfterScan, getUserStats, WASTE_TYPE_POINTS, type WasteTypeStats } from "../utils/storage";
+import { WASTE_TYPE_POINTS, type WasteTypeStats } from "../utils/storage";
+import { useUserStats } from "../context/UserStatsContext";
+
+/** Avoid double-counting when React re-runs effects or revisits the same navigation key. */
+const appliedResultScans = new Set<string>();
 
 export function ResultScreen() {
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { stats, recordScan, loading: statsLoading } = useUserStats();
   const { locale } = useLocale();
   const ui = useUIStrings();
   const [exceptionAcknowledged, setExceptionAcknowledged] = useState(false);
@@ -27,19 +33,29 @@ export function ResultScreen() {
       navigate("/");
       return;
     }
+    if (statsLoading) return;
 
-    const oldStats = getUserStats();
+    const dedupeKey = `${location.key}:${category}`;
+    if (appliedResultScans.has(dedupeKey)) return;
+    appliedResultScans.add(dedupeKey);
+
     const wasteType = category as keyof WasteTypeStats;
-    const newStats = updateStatsAfterScan(wasteType);
-
     const earnedPoints = WASTE_TYPE_POINTS[wasteType] || 10;
     setPointsEarned(earnedPoints);
 
-    const earnedNewBadge = newStats.badges.find((badge) => !oldStats.badges.includes(badge));
-    if (earnedNewBadge) {
-      setNewBadge(earnedNewBadge);
-    }
-  }, [categoryValid, category, navigate]);
+    let cancelled = false;
+    const badgesBefore = [...stats.badges];
+
+    void recordScan(wasteType).then((next) => {
+      if (cancelled || !next) return;
+      const earnedNewBadge = next.badges.find((badge) => !badgesBefore.includes(badge));
+      if (earnedNewBadge) setNewBadge(earnedNewBadge);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [categoryValid, category, navigate, location.key, recordScan, statsLoading, stats.badges]);
 
   useEffect(() => {
     setExceptionAcknowledged(false);

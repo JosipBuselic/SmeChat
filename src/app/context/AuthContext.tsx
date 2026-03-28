@@ -7,8 +7,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Session, User, Provider } from "@supabase/supabase-js";
+import type { Session, User, Provider, SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase, isSupabaseConfigured } from "../lib/supabase";
+import { upsertPublicUserIdentity } from "../lib/userProfile";
 
 type AuthContextValue = {
   session: Session | null;
@@ -42,14 +43,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: next } }) => {
       if (!cancelled) {
         setSession(next);
+        if (next?.user) void upsertPublicUserIdentity(supabase, next.user);
         setLoading(false);
       }
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, next) => {
+    } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
+      if (
+        next?.user &&
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "USER_UPDATED")
+      ) {
+        void upsertPublicUserIdentity(supabase, next.user);
+      }
     });
 
     return () => {
@@ -85,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: { emailRedirectTo: `${window.location.origin}/` },
     });
     if (error) throw error;
+    if (data.session?.user) void upsertPublicUserIdentity(supabase, data.session.user);
     return { needsEmailConfirmation: !data.session };
   }, []);
 
