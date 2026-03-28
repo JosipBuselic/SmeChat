@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/zagreb/:path*",
+      "destination": "https://data.zagreb.hr/:path*"
+    },
+    {
+      "source": "/api/arcgis/:path*",
+      "destination": "https://opendata.arcgis.com/:path*"
+    }
+  ]
+}

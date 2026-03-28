@@ -3,6 +3,7 @@
  * and recycling yards (ArcGIS).
  * Regenerate zeleni GeoJSON: `npm run build:zeleni` (see scripts/build-zeleni-geojson.mjs).
  * Dev: `vite.config` proxies `/api/zagreb` and `/api/arcgis`.
+ * Prod (e.g. Vercel): `vercel.json` rewrites the same paths — data.zagreb.hr has no CORS for browsers.
  */
 
 export const MAX_DISPLAYED_FACILITIES = 10;
@@ -24,11 +25,11 @@ const RECYCLING_YARDS_GEOJSON =
 const ZELENI_OTOCI_GEOJSON = "/data/zeleni-otoci.geojson";
 
 function dataZagrebBase(): string {
-  return import.meta.env.DEV ? "/api/zagreb" : "https://data.zagreb.hr";
+  return "/api/zagreb";
 }
 
 function arcgisBase(): string {
-  return import.meta.env.DEV ? "/api/arcgis" : "https://opendata.arcgis.com";
+  return "/api/arcgis";
 }
 
 export type MapFacilityKind =
