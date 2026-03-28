@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router";
 import { useAuth } from "../context/AuthContext";
+import { UserStatsProvider } from "../context/UserStatsContext";
 import { useUIStrings } from "../i18n/uiStrings";
 
 export function ProtectedLayout() {
@@ -23,5 +24,9 @@ export function ProtectedLayout() {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  return <Outlet />;
+  return (
+    <UserStatsProvider>
+      <Outlet />
+    </UserStatsProvider>
+  );
 }

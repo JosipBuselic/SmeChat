@@ -6,7 +6,6 @@ export type UIStrings = {
     close: string;
   };
   scan: {
-    appTitle: string;
     readyTitle: string;
     readySubtitle: string;
     analyzing: string;
@@ -17,7 +16,7 @@ export type UIStrings = {
     tip3: string;
     statSorted: string;
     statStreak: string;
-    statBadges: string;
+    statRewards: string;
   };
   result: {
     back: string;
@@ -28,6 +27,8 @@ export type UIStrings = {
     useBin: string;
     binForType: string;
     examples: string;
+    newReward: string;
+    rewardKeepGoing: string;
     newBadge: string;
     badgeKeepGoing: string;
     scanAnother: string;
@@ -48,7 +49,9 @@ export type UIStrings = {
     byTypeTitle: string;
     pointsPerItem: string;
     pts: string;
-    achievements: string;
+    achievementsTitle: string;
+    rewardsTitle: string;
+    rewardsSubtitle: string;
     unlocked: string;
     shareTitle: string;
     shareSubtitle: string;
@@ -136,7 +139,7 @@ export type UIStrings = {
     toastSignUpFail: string;
   };
   welcome: {
-    title: string;
+    titlePrefix: string;
     subtitle: string;
     f1Title: string;
     f1Text: string;
@@ -159,51 +162,86 @@ export type UIStrings = {
     quickReplies: string[];
     errorReply: string;
   };
-  badges: Record<
+  rewards: Record<
     string,
     {
       name: string;
       description: string;
     }
   >;
+  badges: Record<string, { name: string; description: string }>;
 };
 
-const BADGE_KEYS = [
-  "first-scan",
-  "eco-newbie",
-  "eco-warrior",
-  "eco-champion",
-  "week-streak",
-  "month-streak",
+const REWARD_KEYS = [
+  "coffee-gradska",
+  "compost-home",
+  "bio-workshop",
+  "plastic-partner",
+  "battery-bonus",
+  "streak-partner",
 ] as const;
 
-function badgesHr(): UIStrings["badges"] {
-  const o: UIStrings["badges"] = {};
-  for (const id of BADGE_KEYS) {
-    const map: Record<(typeof BADGE_KEYS)[number], { name: string; description: string }> = {
-      "first-scan": { name: "Prvi koraci", description: "Završen prvi sken" },
-      "eco-newbie": { name: "Eko početnik", description: "Poredano 10 predmeta" },
-      "eco-warrior": { name: "Eko borac", description: "Poredano 50 predmeta" },
-      "eco-champion": { name: "Eko prvak", description: "Poredano 100 predmeta" },
-      "week-streak": { name: "Tjedni niz", description: "7 dana zaredom" },
-      "month-streak": { name: "Mjesečni niz", description: "30 dana zaredom" },
-    };
-    o[id] = map[id];
-  }
+function rewardsHr(): UIStrings["rewards"] {
+  const map: Record<(typeof REWARD_KEYS)[number], { name: string; description: string }> = {
+    "coffee-gradska": {
+      name: "5% popusta na kavu u Gradskoj kavani",
+      description: "Napravi najmanje 5 uspješnih skenova otpada kategorije bio.",
+    },
+    "compost-home": {
+      name: "Besplatna isporuka komposta na adresu",
+      description: "Napravi najmanje 20 uspješnih skenova otpada kategorije bio.",
+    },
+    "bio-workshop": {
+      name: "Radionica kompostiranja kod kuće",
+      description: "Napravi najmanje 40 uspješnih skenova otpada kategorije bio.",
+    },
+    "plastic-partner": {
+      name: "Bon kod partnera za ambalažu",
+      description: "Napravi najmanje 12 uspješnih skenova otpada kategorije plastika.",
+    },
+    "battery-bonus": {
+      name: "Bon za predaju EE otpada",
+      description: "Napravi najmanje 3 uspješna skena otpada kategorije baterije.",
+    },
+    "streak-partner": {
+      name: "Poklon paket od partnera",
+      description: "Recikliraj u aplikaciji barem jedan predmet 7 kalendarskih dana zaredom (niz dana).",
+    },
+  };
+  const o: UIStrings["rewards"] = {};
+  for (const id of REWARD_KEYS) o[id] = map[id];
   return o;
 }
 
-function badgesEn(): UIStrings["badges"] {
-  const o: UIStrings["badges"] = {};
-  const map: Record<(typeof BADGE_KEYS)[number], { name: string; description: string }> = {
-    "first-scan": { name: "First steps", description: "Completed your first scan" },
-    "eco-newbie": { name: "Eco newbie", description: "Sorted 10 items" },
-    "eco-warrior": { name: "Eco warrior", description: "Sorted 50 items" },
-    "eco-champion": { name: "Eco champion", description: "Sorted 100 items" },
-    "week-streak": { name: "Week streak", description: "7 days in a row" },
-    "month-streak": { name: "Month streak", description: "30 days in a row" },
+function rewardsEn(): UIStrings["rewards"] {
+  const map: Record<(typeof REWARD_KEYS)[number], { name: string; description: string }> = {
+    "coffee-gradska": {
+      name: "5% off coffee at Gradska kavana",
+      description: "Complete at least 5 successful scans classified as organic (bio) waste.",
+    },
+    "compost-home": {
+      name: "Free compost delivery to your address",
+      description: "Complete at least 20 successful scans classified as organic (bio) waste.",
+    },
+    "bio-workshop": {
+      name: "Home composting workshop",
+      description: "Complete at least 40 successful scans classified as organic (bio) waste.",
+    },
+    "plastic-partner": {
+      name: "Partner voucher for packaging / recycling",
+      description: "Complete at least 12 successful scans classified as plastic waste.",
+    },
+    "battery-bonus": {
+      name: "Voucher for e-waste drop-off",
+      description: "Complete at least 3 successful scans classified as batteries.",
+    },
+    "streak-partner": {
+      name: "Partner gift pack",
+      description: "Recycle in the app at least one item on 7 consecutive calendar days (keep your day streak).",
+    },
   };
-  for (const id of BADGE_KEYS) o[id] = map[id];
+  const o: UIStrings["rewards"] = {};
+  for (const id of REWARD_KEYS) o[id] = map[id];
   return o;
 }
 
@@ -214,7 +252,6 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       close: "Zatvori",
     },
     scan: {
-      appTitle: "Snap&Sort",
       readyTitle: "Spremni za recikliranje?",
       readySubtitle: "Snimite otpad i saznajte u koji spremnik ide.",
       analyzing: "Analiziram…",
@@ -225,7 +262,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       tip3: "Prije recikliranja operi ambalažu kad treba",
       statSorted: "Poredano",
       statStreak: "Niz (dani)",
-      statBadges: "Značke",
+      statRewards: "Nagrade",
     },
     result: {
       back: "Natrag",
@@ -236,8 +273,10 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       useBin: "Koristi ovaj spremnik:",
       binForType: "Za ovu vrstu otpada",
       examples: "Primjeri:",
-      newBadge: "Nova značka!",
-      badgeKeepGoing: "Nastavi tako!",
+      newReward: "Nova nagrada!",
+      rewardKeepGoing: "Pogledaj profil za detalje iskorištenja kod partnera.",
+      newBadge: "Novo postignuće!",
+      badgeKeepGoing: "Nastavi skenirati da otključaš još.",
       scanAnother: "Skeniraj još jedan predmet",
       nearestBins: "Najbliži kontejneri",
       exceptionConfirm: "Razumijem",
@@ -256,8 +295,10 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       byTypeTitle: "Reciklirano po vrstama",
       pointsPerItem: "{n} bodova po predmetu",
       pts: "bod.",
-      achievements: "Postignuća",
-      unlocked: "✓ Otključano",
+      achievementsTitle: "Postignuća",
+      rewardsTitle: "Nagrade partnera",
+      rewardsSubtitle: "Za otključavanje moraš ispuniti uvjet uz nagradu.",
+      unlocked: "✓ Ostvareno",
       shareTitle: "Podijeli napredak",
       shareSubtitle: "Potakni druge na recikliranje!",
       shareBtn: "Podijeli",
@@ -349,14 +390,14 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       toastSignUpFail: "Registracija nije uspjela",
     },
     welcome: {
-      title: "Dobro došli u Snap&Sort!",
+      titlePrefix: "Dobro došli u",
       subtitle: "Vaš pomoćnik za recikliranje",
       f1Title: "Brza procjena",
       f1Text: "Snimite otpad i odmah dobijete prijedlog kategorije",
       f2Title: "Nizovi dana",
       f2Text: "Reciklirajte svakodnevno i održavajte niz",
-      f3Title: "Značke",
-      f3Text: "Otključavajte postignuća kako reciklirate više",
+      f3Title: "Nagrade",
+      f3Text: "Otključavaj popuste i kompost uz dovoljno točnog odvajanja otpada",
       f4Title: "Utjecaj",
       f4Text: "Pratite bodove i osobni doprinos",
       cta: "Započni",
@@ -379,7 +420,15 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       ],
       errorReply: "Greška pri odgovoru",
     },
-    badges: badgesHr(),
+    rewards: rewardsHr(),
+    badges: {
+      "first-scan": { name: "Prvi koraci", description: "Završen prvi sken" },
+      "eco-newbie": { name: "Eko početnik", description: "Poredano 10 predmeta" },
+      "eco-warrior": { name: "Eko borac", description: "Poredano 50 predmeta" },
+      "eco-champion": { name: "Eko prvak", description: "Poredano 100 predmeta" },
+      "week-streak": { name: "Tjedni niz", description: "7 dana zaredom" },
+      "month-streak": { name: "Mjesečni niz", description: "30 dana zaredom" },
+    },
   },
   en: {
     common: {
@@ -387,7 +436,6 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       close: "Close",
     },
     scan: {
-      appTitle: "Snap&Sort",
       readyTitle: "Ready to recycle?",
       readySubtitle: "Snap a photo and see which bin to use.",
       analyzing: "Analyzing…",
@@ -398,7 +446,7 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       tip3: "Rinse packaging when needed before recycling",
       statSorted: "Sorted",
       statStreak: "Day streak",
-      statBadges: "Badges",
+      statRewards: "Rewards",
     },
     result: {
       back: "Back",
@@ -409,8 +457,10 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       useBin: "Use this bin:",
       binForType: "For this waste type",
       examples: "Examples:",
-      newBadge: "New badge!",
-      badgeKeepGoing: "Keep it up!",
+      newReward: "New reward!",
+      rewardKeepGoing: "Check your profile for how to redeem with partners.",
+      newBadge: "New achievement!",
+      badgeKeepGoing: "Keep scanning to unlock more.",
       scanAnother: "Scan another item",
       nearestBins: "Nearest bins",
       exceptionConfirm: "I understand",
@@ -429,7 +479,9 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       byTypeTitle: "Recycled by type",
       pointsPerItem: "{n} points per item",
       pts: "pts",
-      achievements: "Achievements",
+      achievementsTitle: "Achievements",
+      rewardsTitle: "Partner rewards",
+      rewardsSubtitle: "Unlock each reward by meeting the requirement shown below.",
       unlocked: "✓ Unlocked",
       shareTitle: "Share your progress",
       shareSubtitle: "Inspire others to recycle!",
@@ -521,14 +573,14 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       toastSignUpFail: "Sign-up failed",
     },
     welcome: {
-      title: "Welcome to Snap&Sort!",
+      titlePrefix: "Welcome to",
       subtitle: "Your recycling assistant",
       f1Title: "Quick sorting",
       f1Text: "Snap waste and get a suggested category right away",
       f2Title: "Streaks",
       f2Text: "Recycle daily and keep your streak",
-      f3Title: "Badges",
-      f3Text: "Unlock achievements as you recycle more",
+      f3Title: "Rewards",
+      f3Text: "Unlock discounts and compost when you sort waste accurately enough",
       f4Title: "Impact",
       f4Text: "Track points and your personal contribution",
       cta: "Get started",
@@ -551,7 +603,15 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       ],
       errorReply: "Could not get a reply",
     },
-    badges: badgesEn(),
+    rewards: rewardsEn(),
+    badges: {
+      "first-scan": { name: "First steps", description: "Completed your first scan" },
+      "eco-newbie": { name: "Eco newbie", description: "Sorted 10 items" },
+      "eco-warrior": { name: "Eco warrior", description: "Sorted 50 items" },
+      "eco-champion": { name: "Eco champion", description: "Sorted 100 items" },
+      "week-streak": { name: "Week streak", description: "7 days in a row" },
+      "month-streak": { name: "Month streak", description: "30 days in a row" },
+    },
   },
 };
 

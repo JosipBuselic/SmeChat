@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useLocation } from "react-router";
 import { motion } from "motion/react";
 import { CheckCircle, ArrowLeft, Sparkles, Tag } from "lucide-react";
 import confetti from "canvas-confetti";
@@ -8,15 +8,28 @@ import { WasteExceptionModal } from "../components/WasteExceptionModal";
 import { useLocale } from "../context/LocaleContext";
 import { formatStr, useUIStrings } from "../i18n/uiStrings";
 import { getWasteCategory, WASTE_CATEGORIES } from "../utils/wasteData";
-import { updateStatsAfterScan, getUserStats, WASTE_TYPE_POINTS, type WasteTypeStats } from "../utils/storage";
+import {
+  WASTE_TYPE_POINTS,
+  REWARD_INFO,
+  BADGE_INFO,
+  computePartnerRewardsUnlocked,
+  type WasteTypeStats,
+} from "../utils/storage";
+import { useUserStats } from "../context/UserStatsContext";
+
+/** Avoid double-counting when React re-runs effects or revisits the same navigation key. */
+const appliedResultScans = new Set<string>();
 
 export function ResultScreen() {
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { stats, recordScan, loading: statsLoading } = useUserStats();
   const { locale } = useLocale();
   const ui = useUIStrings();
   const [exceptionAcknowledged, setExceptionAcknowledged] = useState(false);
-  const [newBadge, setNewBadge] = useState<string | null>(null);
+  const [newRewardId, setNewRewardId] = useState<string | null>(null);
+  const [newBadgeId, setNewBadgeId] = useState<string | null>(null);
   const [pointsEarned, setPointsEarned] = useState(10);
 
   const categoryValid = Boolean(category && category in WASTE_CATEGORIES);
@@ -27,19 +40,33 @@ export function ResultScreen() {
       navigate("/");
       return;
     }
+    if (statsLoading) return;
 
-    const oldStats = getUserStats();
+    const dedupeKey = `${location.key}:${category}`;
+    if (appliedResultScans.has(dedupeKey)) return;
+    appliedResultScans.add(dedupeKey);
+
     const wasteType = category as keyof WasteTypeStats;
-    const newStats = updateStatsAfterScan(wasteType);
-
     const earnedPoints = WASTE_TYPE_POINTS[wasteType] || 10;
     setPointsEarned(earnedPoints);
 
-    const earnedNewBadge = newStats.badges.find((badge) => !oldStats.badges.includes(badge));
-    if (earnedNewBadge) {
-      setNewBadge(earnedNewBadge);
-    }
-  }, [categoryValid, category, navigate]);
+    let cancelled = false;
+    const badgesBefore = [...stats.badges];
+    const rewardsBefore = computePartnerRewardsUnlocked(stats);
+
+    void recordScan(wasteType).then((next) => {
+      if (cancelled || !next) return;
+      const earnedBadge = next.badges.find((b) => !badgesBefore.includes(b));
+      if (earnedBadge) setNewBadgeId(earnedBadge);
+      const rewardsAfter = computePartnerRewardsUnlocked(next);
+      const earnedReward = rewardsAfter.find((r) => !rewardsBefore.includes(r));
+      if (earnedReward) setNewRewardId(earnedReward);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [categoryValid, category, navigate, location.key, recordScan, statsLoading, stats.badges, stats]);
 
   useEffect(() => {
     setExceptionAcknowledged(false);
@@ -179,17 +206,34 @@ export function ResultScreen() {
           </div>
         </motion.div>
 
-        {newBadge && (
+        {newBadgeId && ui.badges[newBadgeId] && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-3xl shadow-lg p-6 mb-6 text-white"
+            className="mb-6 rounded-3xl bg-gradient-to-r from-yellow-400 to-orange-400 p-6 text-white shadow-lg"
           >
             <div className="text-center">
-              <div className="text-4xl mb-2">🏆</div>
-              <p className="font-bold text-lg">{ui.result.newBadge}</p>
-              <p className="text-sm opacity-90 mt-1">{ui.result.badgeKeepGoing}</p>
+              <div className="mb-2 text-4xl">{BADGE_INFO[newBadgeId]?.icon ?? "🏆"}</div>
+              <p className="text-lg font-bold">{ui.result.newBadge}</p>
+              <p className="mt-1 text-base font-semibold opacity-95">{ui.badges[newBadgeId].name}</p>
+              <p className="mt-2 text-sm opacity-90">{ui.result.badgeKeepGoing}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {newRewardId && ui.rewards[newRewardId] && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.55 }}
+            className="mb-6 rounded-3xl bg-gradient-to-r from-amber-400 to-orange-500 p-6 text-white shadow-lg"
+          >
+            <div className="text-center">
+              <div className="mb-2 text-4xl">{REWARD_INFO[newRewardId]?.icon ?? "🎁"}</div>
+              <p className="text-lg font-bold">{ui.result.newReward}</p>
+              <p className="mt-1 text-base font-semibold opacity-95">{ui.rewards[newRewardId].name}</p>
+              <p className="mt-2 text-sm opacity-90">{ui.result.rewardKeepGoing}</p>
             </div>
           </motion.div>
         )}

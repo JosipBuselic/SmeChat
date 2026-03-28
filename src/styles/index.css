@@ -2,7 +2,7 @@
 @import './tailwind.css';
 @import './theme.css';
 
-/* Mobile-first styles for Snap&Sort */
+/* Mobile-first styles for SmeChat */
 body {
   margin: 0;
   padding: 0;
@@ -32,23 +32,51 @@ button, .no-select {
   display: none;
 }
 
-/* Leaflet: Tailwind preflight can shrink tile images */
-.leaflet-container img {
-  max-width: none !important;
+/* SmeChat — animirani gradijent: zelena → tirkiz → plava */
+.smechat-text-sme,
+.smechat-text-chat {
+  background-size: 280% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-/* Permanent “You” label on user location marker (#6d28d9 = marker stroke) */
-.leaflet-tooltip.user-location-label {
-  padding: 3px 9px;
-  border: none;
-  border-radius: 6px;
-  background: rgba(109, 40, 217, 0.96);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+.smechat-text-sme {
+  background-image: linear-gradient(
+    90deg,
+    #15803d,
+    #22c55e,
+    #34d399,
+    #2dd4bf,
+    #14b8a6,
+    #22c55e,
+    #15803d
+  );
+  animation: smechat-gradient-flow 12s ease-in-out infinite;
 }
-.leaflet-tooltip.user-location-label::before {
-  border-top-color: rgba(109, 40, 217, 0.96);
+
+.smechat-text-chat {
+  background-image: linear-gradient(
+    90deg,
+    #0d9488,
+    #2dd4bf,
+    #22d3ee,
+    #38bdf8,
+    #3b82f6,
+    #2563eb,
+    #0d9488
+  );
+  animation: smechat-gradient-flow 12s ease-in-out infinite reverse;
+  animation-delay: -4s;
+}
+
+@keyframes smechat-gradient-flow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }

@@ -1,4 +1,5 @@
-// LocalStorage utilities for user data and gamification
+// Gamification. Supabase: streak, points, sorted_items_count, updated_at.
+// Bedževi u stanju; partnerske nagrade iz wasteTypes + streak (computePartnerRewardsUnlocked).
 
 export interface WasteTypeStats {
   batteries: number;
@@ -20,7 +21,6 @@ export interface UserStats {
   wasteTypes: WasteTypeStats;
 }
 
-// Point values for different waste types
 export const WASTE_TYPE_POINTS: Record<keyof WasteTypeStats, number> = {
   batteries: 50,
   plastic: 20,
@@ -30,7 +30,16 @@ export const WASTE_TYPE_POINTS: Record<keyof WasteTypeStats, number> = {
   bio: 10,
 };
 
-const DEFAULT_STATS: UserStats = {
+export const DEFAULT_WASTE_TYPES: WasteTypeStats = {
+  batteries: 0,
+  plastic: 0,
+  paper: 0,
+  glass: 0,
+  textile: 0,
+  bio: 0,
+};
+
+export const DEFAULT_STATS: UserStats = {
   totalItems: 0,
   currentStreak: 0,
   longestStreak: 0,
@@ -38,110 +47,176 @@ const DEFAULT_STATS: UserStats = {
   points: 0,
   lastScanDate: "",
   badges: [],
-  wasteTypes: {
-    batteries: 0,
-    plastic: 0,
-    paper: 0,
-    glass: 0,
-    textile: 0,
-    bio: 0,
-  },
+  wasteTypes: { ...DEFAULT_WASTE_TYPES },
 };
 
-export function getUserStats(): UserStats {
-  const stored = localStorage.getItem("snap-sort-stats");
-  if (!stored) return DEFAULT_STATS;
-  
-  try {
-    const parsed = JSON.parse(stored);
-    // Ensure wasteTypes exists for backward compatibility
-    if (!parsed.wasteTypes) {
-      parsed.wasteTypes = {
-        batteries: 0,
-        plastic: 0,
-        paper: 0,
-        glass: 0,
-        textile: 0,
-        bio: 0,
-      };
-    }
-    return parsed;
-  } catch {
-    return DEFAULT_STATS;
-  }
+export function todayIsoLocal(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
-export function saveUserStats(stats: UserStats): void {
-  localStorage.setItem("snap-sort-stats", JSON.stringify(stats));
+export function yesterdayIsoLocal(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
-export function updateStatsAfterScan(wasteType?: keyof WasteTypeStats): UserStats {
-  const stats = getUserStats();
-  const today = new Date().toDateString();
-  
-  // Update total items
-  stats.totalItems += 1;
-  
-  // Update waste type count and add corresponding points
-  if (wasteType && wasteType in WASTE_TYPE_POINTS) {
-    stats.wasteTypes[wasteType] += 1;
-    stats.points += WASTE_TYPE_POINTS[wasteType];
+export function localDateFromIsoTimestamp(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function nextRowAfterScanFromDb(
+  row: {
+    streak: number;
+    points: number;
+    sorted_items_count: number;
+    updated_at: string;
+  },
+  pointsAdd: number,
+): { streak: number; points: number; sorted_items_count: number } {
+  const newSorted = (row.sorted_items_count ?? 0) + 1;
+  const newPoints = (row.points ?? 0) + pointsAdd;
+  const today = todayIsoLocal();
+  const yesterday = yesterdayIsoLocal();
+  const lastAct = localDateFromIsoTimestamp(row.updated_at);
+
+  let newStreak = row.streak ?? 0;
+  if ((row.sorted_items_count ?? 0) === 0) {
+    newStreak = 1;
+  } else if (lastAct === today) {
+    newStreak = row.streak ?? 0;
+  } else if (lastAct === yesterday) {
+    newStreak = (row.streak ?? 0) + 1;
   } else {
-    // Default to 10 points if no specific type
-    stats.points += 10;
+    newStreak = 1;
   }
-  
-  // Update streak
-  if (stats.lastScanDate !== today) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (stats.lastScanDate === yesterday.toDateString()) {
-      // Continue streak
-      stats.currentStreak += 1;
-    } else {
-      // Streak broken, start new
-      stats.currentStreak = 1;
-    }
-    
-    stats.lastScanDate = today;
-  }
-  
-  // Update longest streak
-  if (stats.currentStreak > stats.longestStreak) {
-    stats.longestStreak = stats.currentStreak;
-  }
-  
-  // Calculate eco score (based on items and streak)
-  stats.ecoScore = stats.totalItems * 10 + stats.currentStreak * 50;
-  
-  // Award badges
-  const newBadges: string[] = [...stats.badges];
-  
-  if (stats.totalItems >= 1 && !newBadges.includes("first-scan")) {
-    newBadges.push("first-scan");
-  }
-  if (stats.totalItems >= 10 && !newBadges.includes("eco-newbie")) {
-    newBadges.push("eco-newbie");
-  }
-  if (stats.totalItems >= 50 && !newBadges.includes("eco-warrior")) {
-    newBadges.push("eco-warrior");
-  }
-  if (stats.totalItems >= 100 && !newBadges.includes("eco-champion")) {
-    newBadges.push("eco-champion");
-  }
-  if (stats.currentStreak >= 7 && !newBadges.includes("week-streak")) {
-    newBadges.push("week-streak");
-  }
-  if (stats.currentStreak >= 30 && !newBadges.includes("month-streak")) {
-    newBadges.push("month-streak");
-  }
-  
-  stats.badges = newBadges;
-  
-  saveUserStats(stats);
-  return stats;
+  return { streak: newStreak, points: newPoints, sorted_items_count: newSorted };
 }
+
+export function userStatsFromDbRow(row: {
+  streak: number;
+  points: number;
+  sorted_items_count: number;
+  updated_at?: string | null;
+}): UserStats {
+  const totalItems = row.sorted_items_count ?? 0;
+  const currentStreak = row.streak ?? 0;
+  const points = row.points ?? 0;
+  return {
+    totalItems,
+    currentStreak,
+    longestStreak: currentStreak,
+    points,
+    lastScanDate: row.updated_at ? localDateFromIsoTimestamp(row.updated_at) : "",
+    badges: [],
+    wasteTypes: { ...DEFAULT_WASTE_TYPES },
+    ecoScore: totalItems * 10 + currentStreak * 50,
+  };
+}
+
+export function computeBadgesForTotals(
+  totalItems: number,
+  currentStreak: number,
+  prev: string[],
+): string[] {
+  const next = [...prev];
+  if (totalItems >= 1 && !next.includes("first-scan")) next.push("first-scan");
+  if (totalItems >= 10 && !next.includes("eco-newbie")) next.push("eco-newbie");
+  if (totalItems >= 50 && !next.includes("eco-warrior")) next.push("eco-warrior");
+  if (totalItems >= 100 && !next.includes("eco-champion")) next.push("eco-champion");
+  if (currentStreak >= 7 && !next.includes("week-streak")) next.push("week-streak");
+  if (currentStreak >= 30 && !next.includes("month-streak")) next.push("month-streak");
+  return next;
+}
+
+export function computePartnerRewardsUnlocked(stats: UserStats): string[] {
+  const next: string[] = [];
+  const { bio, plastic, batteries } = stats.wasteTypes;
+
+  const tryPush = (id: string, condition: boolean) => {
+    if (condition && !next.includes(id)) next.push(id);
+  };
+
+  tryPush("coffee-gradska", bio >= 5);
+  tryPush("compost-home", bio >= 20);
+  tryPush("bio-workshop", bio >= 40);
+  tryPush("plastic-partner", plastic >= 12);
+  tryPush("battery-bonus", batteries >= 3);
+  tryPush("streak-partner", stats.currentStreak >= 7);
+
+  return next;
+}
+
+export function computeStatsAfterScan(
+  stats: UserStats,
+  wasteType?: keyof WasteTypeStats,
+): UserStats {
+  const next: UserStats = {
+    ...stats,
+    wasteTypes: { ...stats.wasteTypes },
+    badges: [...stats.badges],
+  };
+
+  next.totalItems += 1;
+
+  if (wasteType && wasteType in WASTE_TYPE_POINTS) {
+    next.wasteTypes[wasteType] += 1;
+    next.points += WASTE_TYPE_POINTS[wasteType];
+  } else {
+    next.points += 10;
+  }
+
+  const today = todayIsoLocal();
+  const yesterday = yesterdayIsoLocal();
+
+  if (next.lastScanDate !== today) {
+    if (next.lastScanDate === yesterday) {
+      next.currentStreak += 1;
+    } else {
+      next.currentStreak = 1;
+    }
+    next.lastScanDate = today;
+  }
+
+  if (next.currentStreak > next.longestStreak) {
+    next.longestStreak = next.currentStreak;
+  }
+
+  next.ecoScore = next.totalItems * 10 + next.currentStreak * 50;
+  next.badges = computeBadgesForTotals(next.totalItems, next.currentStreak, next.badges);
+
+  return next;
+}
+
+export const REWARD_INFO: Record<string, { icon: string }> = {
+  "coffee-gradska": { icon: "☕" },
+  "compost-home": { icon: "🪴" },
+  "bio-workshop": { icon: "🌿" },
+  "plastic-partner": { icon: "♻️" },
+  "battery-bonus": { icon: "🔋" },
+  "streak-partner": { icon: "🎁" },
+};
+
+export const PROFILE_REWARD_IDS = [
+  "coffee-gradska",
+  "compost-home",
+  "bio-workshop",
+  "plastic-partner",
+  "battery-bonus",
+  "streak-partner",
+] as const;
 
 export const BADGE_INFO: Record<string, { name: string; icon: string; description: string }> = {
   "first-scan": {
@@ -175,3 +250,12 @@ export const BADGE_INFO: Record<string, { name: string; icon: string; descriptio
     description: "30 dana zaredom",
   },
 };
+
+export const PROFILE_BADGE_IDS = [
+  "first-scan",
+  "eco-newbie",
+  "eco-warrior",
+  "eco-champion",
+  "week-streak",
+  "month-streak",
+] as const;
