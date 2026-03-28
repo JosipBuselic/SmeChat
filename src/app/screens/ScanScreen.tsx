@@ -10,6 +10,8 @@ import { useUIStrings } from "../i18n/uiStrings";
 import { useUserStats } from "../context/UserStatsContext";
 import { computePartnerRewardsUnlocked } from "../utils/storage";
 
+import { classifyImageWithGoogleVision } from "../lib/vision";
+
 export function ScanScreen() {
   const navigate = useNavigate();
   const ui = useUIStrings();
@@ -17,7 +19,7 @@ export function ScanScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { stats, loading: statsLoading } = useUserStats();
   
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     
@@ -28,14 +30,16 @@ export function ScanScreen() {
     
     setIsProcessing(true);
     
-    // Simulate processing time
-    setTimeout(() => {
-      // Navigate to result with a random category
-      const categories = ["batteries", "plastic", "paper", "glass", "textile", "bio"];
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-      navigate(`/result/${randomCategory}`);
+    try {
+      // Actually call Google Cloud Vision API
+      const category = await classifyImageWithGoogleVision(file);
+      navigate(`/result/${category}`);
+    } catch (error) {
+      console.error("Classification failed:", error);
+      navigate("/result/paper"); // Fallback
+    } finally {
       setIsProcessing(false);
-    }, 1500);
+    }
   };
   
   const handleCameraClick = () => {
