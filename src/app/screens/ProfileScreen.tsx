@@ -23,12 +23,15 @@ import {
 } from "../components/ui/sheet";
 import { useLocale } from "../context/LocaleContext";
 import { formatStr, useUIStrings } from "../i18n/uiStrings";
-<<<<<<< HEAD
-import { getUserStats, WASTE_TYPE_POINTS, REWARD_INFO, PROFILE_REWARD_IDS } from "../utils/storage";
-=======
-import { WASTE_TYPE_POINTS, BADGE_INFO } from "../utils/storage";
+import {
+  WASTE_TYPE_POINTS,
+  BADGE_INFO,
+  PROFILE_BADGE_IDS,
+  PROFILE_REWARD_IDS,
+  REWARD_INFO,
+  computePartnerRewardsUnlocked,
+} from "../utils/storage";
 import { useUserStats } from "../context/UserStatsContext";
->>>>>>> c0f2a7e6ce6a1f06b9eae5770ba53878090313b7
 import { Progress } from "../components/ui/progress";
 import { useAuth } from "../context/AuthContext";
 import { cn } from "../components/ui/utils";
@@ -271,27 +274,53 @@ export function ProfileScreen() {
         </div>
 
         <div className="mb-6 rounded-2xl bg-white p-6 shadow-lg">
-          <h3 className="mb-1 flex items-center gap-2 font-bold text-gray-900">
-            <Gift className="h-5 w-5 text-amber-600" />
-            {ui.profile.rewardsTitle}
+          <h3 className="mb-4 flex items-center gap-2 font-bold text-gray-900">
+            <Trophy className="h-5 w-5 text-yellow-600" />
+            {ui.profile.achievementsTitle}
           </h3>
-          <p className="mb-4 text-sm text-gray-600">{ui.profile.rewardsSubtitle}</p>
-
-<<<<<<< HEAD
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {PROFILE_REWARD_IDS.map((rewardId) => {
-              const reward = ui.rewards[rewardId];
-              const meta = REWARD_INFO[rewardId];
-              const isUnlocked = stats.rewards.includes(rewardId);
-              if (!reward || !meta) return null;
-=======
           <div className="grid grid-cols-3 gap-3">
             {PROFILE_BADGE_IDS.map((badgeId) => {
               const badge = ui.badges[badgeId];
               const meta = BADGE_INFO[badgeId];
               const isUnlocked = !statsLoading && stats.badges.includes(badgeId);
               if (!badge || !meta) return null;
->>>>>>> c0f2a7e6ce6a1f06b9eae5770ba53878090313b7
+
+              return (
+                <motion.div
+                  key={badgeId}
+                  whileHover={{ scale: 1.05 }}
+                  className={`rounded-xl p-3 text-center ${
+                    isUnlocked ? "bg-gradient-to-br from-yellow-100 to-orange-100" : "bg-gray-100"
+                  }`}
+                >
+                  <div className={`mb-1 text-3xl ${!isUnlocked ? "opacity-50 grayscale" : ""}`}>
+                    {meta.icon}
+                  </div>
+                  <div className="mb-1 text-xs font-semibold text-gray-900">{badge.name}</div>
+                  <div className="text-xs text-gray-600">{badge.description}</div>
+                  {isUnlocked && (
+                    <div className="mt-1 text-xs font-semibold text-green-600">{ui.profile.unlocked}</div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mb-6 rounded-2xl bg-white p-6 shadow-lg">
+          <h3 className="mb-1 flex items-center gap-2 font-bold text-gray-900">
+            <Gift className="h-5 w-5 text-amber-600" />
+            {ui.profile.rewardsTitle}
+          </h3>
+          <p className="mb-4 text-sm text-gray-600">{ui.profile.rewardsSubtitle}</p>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {PROFILE_REWARD_IDS.map((rewardId) => {
+              const reward = ui.rewards[rewardId];
+              const meta = REWARD_INFO[rewardId];
+              const unlocked = computePartnerRewardsUnlocked(stats);
+              const isUnlocked = !statsLoading && unlocked.includes(rewardId);
+              if (!reward || !meta) return null;
 
               return (
                 <motion.div

@@ -1,6 +1,5 @@
-// Gamification types. U Supabase idu samo: streak, points, sorted_items_count, updated_at.
-// „Isti dan” za streak = lokalni kalendar datuma od updated_at + sorted_items_count.
-// Broj po tipu otpada i bedževi su u UI stanju (sesija).
+// Gamification. Supabase: streak, points, sorted_items_count, updated_at.
+// Bedževi u stanju; partnerske nagrade iz wasteTypes + streak (computePartnerRewardsUnlocked).
 
 export interface WasteTypeStats {
   batteries: number;
@@ -18,8 +17,7 @@ export interface UserStats {
   ecoScore: number;
   points: number;
   lastScanDate: string;
-  /** Otključane partnerske nagrade (ID iz REWARD_INFO) */
-  rewards: string[];
+  badges: string[];
   wasteTypes: WasteTypeStats;
 }
 
@@ -48,43 +46,6 @@ export const DEFAULT_STATS: UserStats = {
   ecoScore: 0,
   points: 0,
   lastScanDate: "",
-<<<<<<< HEAD
-  rewards: [],
-  wasteTypes: {
-    batteries: 0,
-    plastic: 0,
-    paper: 0,
-    glass: 0,
-    textile: 0,
-    bio: 0,
-  },
-};
-
-export function getUserStats(): UserStats {
-  const stored = localStorage.getItem("snap-sort-stats");
-  if (!stored) return DEFAULT_STATS;
-
-  try {
-    const parsed = JSON.parse(stored) as Partial<UserStats> & { badges?: string[] };
-    if (!parsed.wasteTypes) {
-      parsed.wasteTypes = { ...DEFAULT_STATS.wasteTypes };
-    }
-    const rewards = Array.isArray(parsed.rewards)
-      ? parsed.rewards
-      : Array.isArray(parsed.badges)
-        ? []
-        : [];
-    const { badges: _legacy, ...rest } = parsed;
-    return {
-      ...DEFAULT_STATS,
-      ...rest,
-      wasteTypes: { ...DEFAULT_STATS.wasteTypes, ...parsed.wasteTypes },
-      rewards,
-    };
-  } catch {
-    return DEFAULT_STATS;
-  }
-=======
   badges: [],
   wasteTypes: { ...DEFAULT_WASTE_TYPES },
 };
@@ -95,7 +56,6 @@ export function todayIsoLocal(): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
->>>>>>> c0f2a7e6ce6a1f06b9eae5770ba53878090313b7
 }
 
 export function yesterdayIsoLocal(): string {
@@ -107,81 +67,6 @@ export function yesterdayIsoLocal(): string {
   return `${y}-${m}-${day}`;
 }
 
-<<<<<<< HEAD
-function awardRewards(stats: UserStats): string[] {
-  const next = [...stats.rewards];
-  const { bio, plastic, batteries } = stats.wasteTypes;
-
-  const tryPush = (id: string, condition: boolean) => {
-    if (condition && !next.includes(id)) next.push(id);
-  };
-
-  tryPush("coffee-gradska", bio >= 5);
-  tryPush("compost-home", bio >= 20);
-  tryPush("bio-workshop", bio >= 40);
-  tryPush("plastic-partner", plastic >= 12);
-  tryPush("battery-bonus", batteries >= 3);
-  tryPush("streak-partner", stats.currentStreak >= 7);
-
-  return next;
-}
-
-export function updateStatsAfterScan(wasteType?: keyof WasteTypeStats): UserStats {
-  const stats = getUserStats();
-  const today = new Date().toDateString();
-
-  stats.totalItems += 1;
-
-  if (wasteType && wasteType in WASTE_TYPE_POINTS) {
-    stats.wasteTypes[wasteType] += 1;
-    stats.points += WASTE_TYPE_POINTS[wasteType];
-  } else {
-    stats.points += 10;
-  }
-
-  if (stats.lastScanDate !== today) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (stats.lastScanDate === yesterday.toDateString()) {
-      stats.currentStreak += 1;
-    } else {
-      stats.currentStreak = 1;
-    }
-
-    stats.lastScanDate = today;
-  }
-
-  if (stats.currentStreak > stats.longestStreak) {
-    stats.longestStreak = stats.currentStreak;
-  }
-
-  stats.ecoScore = stats.totalItems * 10 + stats.currentStreak * 50;
-  stats.rewards = awardRewards(stats);
-
-  saveUserStats(stats);
-  return stats;
-}
-
-/** Ikone za nagrade (naziv i opis u i18n) */
-export const REWARD_INFO: Record<string, { icon: string }> = {
-  "coffee-gradska": { icon: "☕" },
-  "compost-home": { icon: "🪴" },
-  "bio-workshop": { icon: "🌿" },
-  "plastic-partner": { icon: "♻️" },
-  "battery-bonus": { icon: "🔋" },
-  "streak-partner": { icon: "🎁" },
-};
-
-export const PROFILE_REWARD_IDS = [
-  "coffee-gradska",
-  "compost-home",
-  "bio-workshop",
-  "plastic-partner",
-  "battery-bonus",
-  "streak-partner",
-] as const;
-=======
 export function localDateFromIsoTimestamp(iso: string | null | undefined): string {
   if (!iso) return "";
   const d = new Date(iso);
@@ -192,7 +77,6 @@ export function localDateFromIsoTimestamp(iso: string | null | undefined): strin
   return `${y}-${m}-${day}`;
 }
 
-/** Ista logika kao record_user_scan u bazi (fallback ako RPC ne postoji). */
 export function nextRowAfterScanFromDb(
   row: {
     streak: number;
@@ -221,7 +105,6 @@ export function nextRowAfterScanFromDb(
   return { streak: newStreak, points: newPoints, sorted_items_count: newSorted };
 }
 
-/** Red iz public.users (samo tvoji stupci). */
 export function userStatsFromDbRow(row: {
   streak: number;
   points: number;
@@ -258,7 +141,24 @@ export function computeBadgesForTotals(
   return next;
 }
 
-/** Sljedeće stanje nakon skena (lokalna simulacija; u app-u koristi se RPC record_user_scan). */
+export function computePartnerRewardsUnlocked(stats: UserStats): string[] {
+  const next: string[] = [];
+  const { bio, plastic, batteries } = stats.wasteTypes;
+
+  const tryPush = (id: string, condition: boolean) => {
+    if (condition && !next.includes(id)) next.push(id);
+  };
+
+  tryPush("coffee-gradska", bio >= 5);
+  tryPush("compost-home", bio >= 20);
+  tryPush("bio-workshop", bio >= 40);
+  tryPush("plastic-partner", plastic >= 12);
+  tryPush("battery-bonus", batteries >= 3);
+  tryPush("streak-partner", stats.currentStreak >= 7);
+
+  return next;
+}
+
 export function computeStatsAfterScan(
   stats: UserStats,
   wasteType?: keyof WasteTypeStats,
@@ -300,6 +200,24 @@ export function computeStatsAfterScan(
   return next;
 }
 
+export const REWARD_INFO: Record<string, { icon: string }> = {
+  "coffee-gradska": { icon: "☕" },
+  "compost-home": { icon: "🪴" },
+  "bio-workshop": { icon: "🌿" },
+  "plastic-partner": { icon: "♻️" },
+  "battery-bonus": { icon: "🔋" },
+  "streak-partner": { icon: "🎁" },
+};
+
+export const PROFILE_REWARD_IDS = [
+  "coffee-gradska",
+  "compost-home",
+  "bio-workshop",
+  "plastic-partner",
+  "battery-bonus",
+  "streak-partner",
+] as const;
+
 export const BADGE_INFO: Record<string, { name: string; icon: string; description: string }> = {
   "first-scan": {
     name: "Prvi koraci",
@@ -332,4 +250,12 @@ export const BADGE_INFO: Record<string, { name: string; icon: string; descriptio
     description: "30 dana zaredom",
   },
 };
->>>>>>> c0f2a7e6ce6a1f06b9eae5770ba53878090313b7
+
+export const PROFILE_BADGE_IDS = [
+  "first-scan",
+  "eco-newbie",
+  "eco-warrior",
+  "eco-champion",
+  "week-streak",
+  "month-streak",
+] as const;

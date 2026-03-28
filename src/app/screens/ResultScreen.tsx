@@ -8,21 +8,17 @@ import { WasteExceptionModal } from "../components/WasteExceptionModal";
 import { useLocale } from "../context/LocaleContext";
 import { formatStr, useUIStrings } from "../i18n/uiStrings";
 import { getWasteCategory, WASTE_CATEGORIES } from "../utils/wasteData";
-<<<<<<< HEAD
 import {
-  updateStatsAfterScan,
-  getUserStats,
   WASTE_TYPE_POINTS,
   REWARD_INFO,
+  BADGE_INFO,
+  computePartnerRewardsUnlocked,
   type WasteTypeStats,
 } from "../utils/storage";
-=======
-import { WASTE_TYPE_POINTS, type WasteTypeStats } from "../utils/storage";
 import { useUserStats } from "../context/UserStatsContext";
 
 /** Avoid double-counting when React re-runs effects or revisits the same navigation key. */
 const appliedResultScans = new Set<string>();
->>>>>>> c0f2a7e6ce6a1f06b9eae5770ba53878090313b7
 
 export function ResultScreen() {
   const { category } = useParams<{ category: string }>();
@@ -33,6 +29,7 @@ export function ResultScreen() {
   const ui = useUIStrings();
   const [exceptionAcknowledged, setExceptionAcknowledged] = useState(false);
   const [newRewardId, setNewRewardId] = useState<string | null>(null);
+  const [newBadgeId, setNewBadgeId] = useState<string | null>(null);
   const [pointsEarned, setPointsEarned] = useState(10);
 
   const categoryValid = Boolean(category && category in WASTE_CATEGORIES);
@@ -53,25 +50,23 @@ export function ResultScreen() {
     const earnedPoints = WASTE_TYPE_POINTS[wasteType] || 10;
     setPointsEarned(earnedPoints);
 
-<<<<<<< HEAD
-    const earned = newStats.rewards.find((r) => !oldStats.rewards.includes(r));
-    if (earned) setNewRewardId(earned);
-  }, [categoryValid, category, navigate]);
-=======
     let cancelled = false;
     const badgesBefore = [...stats.badges];
+    const rewardsBefore = computePartnerRewardsUnlocked(stats);
 
     void recordScan(wasteType).then((next) => {
       if (cancelled || !next) return;
-      const earnedNewBadge = next.badges.find((badge) => !badgesBefore.includes(badge));
-      if (earnedNewBadge) setNewBadge(earnedNewBadge);
+      const earnedBadge = next.badges.find((b) => !badgesBefore.includes(b));
+      if (earnedBadge) setNewBadgeId(earnedBadge);
+      const rewardsAfter = computePartnerRewardsUnlocked(next);
+      const earnedReward = rewardsAfter.find((r) => !rewardsBefore.includes(r));
+      if (earnedReward) setNewRewardId(earnedReward);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [categoryValid, category, navigate, location.key, recordScan, statsLoading, stats.badges]);
->>>>>>> c0f2a7e6ce6a1f06b9eae5770ba53878090313b7
+  }, [categoryValid, category, navigate, location.key, recordScan, statsLoading, stats.badges, stats]);
 
   useEffect(() => {
     setExceptionAcknowledged(false);
@@ -211,11 +206,27 @@ export function ResultScreen() {
           </div>
         </motion.div>
 
-        {newRewardId && ui.rewards[newRewardId] && (
+        {newBadgeId && ui.badges[newBadgeId] && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
+            className="mb-6 rounded-3xl bg-gradient-to-r from-yellow-400 to-orange-400 p-6 text-white shadow-lg"
+          >
+            <div className="text-center">
+              <div className="mb-2 text-4xl">{BADGE_INFO[newBadgeId]?.icon ?? "🏆"}</div>
+              <p className="text-lg font-bold">{ui.result.newBadge}</p>
+              <p className="mt-1 text-base font-semibold opacity-95">{ui.badges[newBadgeId].name}</p>
+              <p className="mt-2 text-sm opacity-90">{ui.result.badgeKeepGoing}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {newRewardId && ui.rewards[newRewardId] && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.55 }}
             className="mb-6 rounded-3xl bg-gradient-to-r from-amber-400 to-orange-500 p-6 text-white shadow-lg"
           >
             <div className="text-center">

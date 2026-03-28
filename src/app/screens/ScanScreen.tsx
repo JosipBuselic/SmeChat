@@ -8,6 +8,7 @@ import { WelcomeModal } from "../components/WelcomeModal";
 import { RecycleChatbot } from "../components/RecycleChatbot";
 import { useUIStrings } from "../i18n/uiStrings";
 import { useUserStats } from "../context/UserStatsContext";
+import { computePartnerRewardsUnlocked } from "../utils/storage";
 
 export function ScanScreen() {
   const navigate = useNavigate();
@@ -176,15 +177,10 @@ export function ScanScreen() {
             <div className="text-xs text-gray-500 mt-1">{ui.scan.statStreak}</div>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4 text-center">
-<<<<<<< HEAD
-            <div className="text-2xl font-bold text-yellow-600">{stats.rewards.length}</div>
-            <div className="text-xs text-gray-500 mt-1">{ui.scan.statRewards}</div>
-=======
             <div className="text-2xl font-bold text-yellow-600">
-              {statsLoading ? "—" : stats.badges.length}
+              {statsLoading ? "—" : computePartnerRewardsUnlocked(stats).length}
             </div>
-            <div className="text-xs text-gray-500 mt-1">{ui.scan.statBadges}</div>
->>>>>>> c0f2a7e6ce6a1f06b9eae5770ba53878090313b7
+            <div className="text-xs text-gray-500 mt-1">{ui.scan.statRewards}</div>
           </div>
         </motion.div>
       </div>

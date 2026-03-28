@@ -29,6 +29,8 @@ export type UIStrings = {
     examples: string;
     newReward: string;
     rewardKeepGoing: string;
+    newBadge: string;
+    badgeKeepGoing: string;
     scanAnother: string;
     nearestBins: string;
     exceptionConfirm: string;
@@ -47,6 +49,7 @@ export type UIStrings = {
     byTypeTitle: string;
     pointsPerItem: string;
     pts: string;
+    achievementsTitle: string;
     rewardsTitle: string;
     rewardsSubtitle: string;
     unlocked: string;
@@ -166,6 +169,7 @@ export type UIStrings = {
       description: string;
     }
   >;
+  badges: Record<string, { name: string; description: string }>;
 };
 
 const REWARD_KEYS = [
@@ -271,6 +275,8 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       examples: "Primjeri:",
       newReward: "Nova nagrada!",
       rewardKeepGoing: "Pogledaj profil za detalje iskorištenja kod partnera.",
+      newBadge: "Novo postignuće!",
+      badgeKeepGoing: "Nastavi skenirati da otključaš još.",
       scanAnother: "Skeniraj još jedan predmet",
       nearestBins: "Najbliži kontejneri",
       exceptionConfirm: "Razumijem",
@@ -289,7 +295,8 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       byTypeTitle: "Reciklirano po vrstama",
       pointsPerItem: "{n} bodova po predmetu",
       pts: "bod.",
-      rewardsTitle: "Nagrade",
+      achievementsTitle: "Postignuća",
+      rewardsTitle: "Nagrade partnera",
       rewardsSubtitle: "Za otključavanje moraš ispuniti uvjet uz nagradu.",
       unlocked: "✓ Ostvareno",
       shareTitle: "Podijeli napredak",
@@ -414,6 +421,14 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       errorReply: "Greška pri odgovoru",
     },
     rewards: rewardsHr(),
+    badges: {
+      "first-scan": { name: "Prvi koraci", description: "Završen prvi sken" },
+      "eco-newbie": { name: "Eko početnik", description: "Poredano 10 predmeta" },
+      "eco-warrior": { name: "Eko borac", description: "Poredano 50 predmeta" },
+      "eco-champion": { name: "Eko prvak", description: "Poredano 100 predmeta" },
+      "week-streak": { name: "Tjedni niz", description: "7 dana zaredom" },
+      "month-streak": { name: "Mjesečni niz", description: "30 dana zaredom" },
+    },
   },
   en: {
     common: {
@@ -444,6 +459,8 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       examples: "Examples:",
       newReward: "New reward!",
       rewardKeepGoing: "Check your profile for how to redeem with partners.",
+      newBadge: "New achievement!",
+      badgeKeepGoing: "Keep scanning to unlock more.",
       scanAnother: "Scan another item",
       nearestBins: "Nearest bins",
       exceptionConfirm: "I understand",
@@ -462,7 +479,8 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       byTypeTitle: "Recycled by type",
       pointsPerItem: "{n} points per item",
       pts: "pts",
-      rewardsTitle: "Rewards",
+      achievementsTitle: "Achievements",
+      rewardsTitle: "Partner rewards",
       rewardsSubtitle: "Unlock each reward by meeting the requirement shown below.",
       unlocked: "✓ Unlocked",
       shareTitle: "Share your progress",
@@ -586,6 +604,14 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
       errorReply: "Could not get a reply",
     },
     rewards: rewardsEn(),
+    badges: {
+      "first-scan": { name: "First steps", description: "Completed your first scan" },
+      "eco-newbie": { name: "Eco newbie", description: "Sorted 10 items" },
+      "eco-warrior": { name: "Eco warrior", description: "Sorted 50 items" },
+      "eco-champion": { name: "Eco champion", description: "Sorted 100 items" },
+      "week-streak": { name: "Week streak", description: "7 days in a row" },
+      "month-streak": { name: "Month streak", description: "30 days in a row" },
+    },
   },
 };
 
