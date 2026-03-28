@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="260" viewBox="0 0 400 260" role="img" aria-label="Profil">
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="260" viewBox="0 0 400 260" role="img" aria-label="Profile">
   <defs>
     <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#ede9fe"/>
@@ -8,10 +8,10 @@
   <rect width="400" height="260" rx="16" fill="url(#g4)"/>
   <rect x="55" y="40" width="290" height="180" rx="16" fill="#fff" stroke="#8b5cf6" stroke-width="2"/>
   <circle cx="200" cy="95" r="28" fill="#c4b5fd"/>
-  <text x="200" y="104" text-anchor="middle" font-size="28"><1</text>
+  <text x="200" y="104" text-anchor="middle" font-size="28">&#x1F331;</text>
   <rect x="80" y="130" width="240" height="10" rx="5" fill="#e2e8f0"/>
   <rect x="80" y="130" width="160" height="10" rx="5" fill="#8b5cf6"/>
   <rect x="80" y="155" width="240" height="8" rx="4" fill="#f1f5f9"/>
   <rect x="80" y="175" width="180" height="8" rx="4" fill="#f1f5f9"/>
-  <text x="200" y="235" text-anchor="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="600" fill="#5b21b6">Bodovi, bed~evi, po vrstama</text>
+  <text x="200" y="235" text-anchor="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="600" fill="#5b21b6">Points, badges, stats by type</text>
 </svg>

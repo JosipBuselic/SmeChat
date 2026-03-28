@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/readme/banner.svg" alt="Snap&amp;Sort — pametno razvrstavanje otpada" width="100%" />
+  <img src="docs/readme/banner.svg" alt="Snap&amp;Sort — smart waste sorting" width="100%" />
 </p>
 
 <p align="center">
@@ -12,125 +12,126 @@
 
 # Snap&Sort
 
-**Snap&Sort** je mobilno-prilagođena web aplikacija za **razvrstavanje kućnog otpada** s fokusom na **Zagreb** (boje kanti, kalendar odvoza, korisne lokacije). Korisnik fotografira otpad, dobije **AI prijedlog kategorije**, uči kamo ga odlagati i skuplja **bodove, bedževe i statistiku po vrstama** — sve povezano s **Supabase** autentifikacijom i profilom.
+**Snap&Sort** is a mobile-first web app for **household waste sorting**, focused on **Zagreb** (bin colours, collection calendar, useful locations). Users take a photo of waste, get a **category suggestion** powered by **Google Cloud Vision** (label detection mapped to local bin categories), learn where to dispose of it, and earn **points, badges, and per-type stats** — backed by **Supabase** authentication and profile data.
 
-> Dizajn i UX temelje se na [Figma maketi Snap&Sort](https://www.figma.com/design/WNyvu6PY8MPDS9oPJ0V7jg/Snap-Sort-App-Design).
+> UI and UX are based on the [Snap&Sort Figma design](https://www.figma.com/design/WNyvu6PY8MPDS9oPJ0V7jg/Snap-Sort-App-Design).
 
 ---
 
-## Galerija (vizualni pregled)
+## Gallery
 
-| Sken &amp; AI | Karta | Kalendar | Profil |
+| Scan &amp; AI | Map | Calendar | Profile |
 |:---:|:---:|:---:|:---:|
-| ![Sken](docs/readme/feature-scan.svg) | ![Karta](docs/readme/feature-map.svg) | ![Kalendar](docs/readme/feature-calendar.svg) | ![Profil](docs/readme/feature-profile.svg) |
+| ![Scan](docs/readme/feature-scan.svg) | ![Map](docs/readme/feature-map.svg) | ![Calendar](docs/readme/feature-calendar.svg) | ![Profile](docs/readme/feature-profile.svg) |
 
-**Stvarne snimke zaslona:** dodaj PNG/WebP datoteke u `docs/screenshots/` (npr. `scan.png`, `map.png`) i u tablicu iznad zamijeni `src` s relativnim putanjama — GitHub će ih lijepo prikazati u README-u.
-
----
-
-## Ključne mogućnosti
-
-- **Sken slike** — klasifikacija pomoću **Groq** vision modela (Llama 4 Scout); nevaljane slike se odbijaju bez lažne kategorije.
-- **Rezultat po kategoriji** — savjeti za **baterije, plastiku, papir, staklo, tekstil, bio, miješani** otpad (Zagreb-style).
-- **Interaktivna karta** — **Leaflet**; opcijski Google Maps sloj; zeleni otoci i slične točke.
-- **Kalendar odvoza** — referentni raspored za Zagreb, poveznice na službene izvore i (opcionalno) **Razvrstaj MojZG** za adresu.
-- **Profil &amp; gamifikacija** — bodovi po vrsti, niz dana, bedževi; **Supabase** čuva `waste_by_type` i agregate nakon skenova.
-- **EKO asistent** — opcijski chat s **Google Gemini** za pitanja o recikliranju.
-- **Lokalizacija** — hrvatski / engleski UI.
+Add real screenshots under `docs/screenshots/` (e.g. `scan.png`, `map.png`) and point the table `src` attributes to those files if you want photos in the README.
 
 ---
 
-## Tehnologije
+## Features
 
-| Sloj | Izbor |
-|------|--------|
+- **Photo scan** — **Google Cloud Vision API** (`LABEL_DETECTION`); returned labels are mapped to app categories (paper, plastic, glass, bio, batteries, textile). Without a key, the app falls back to a simulated category for local testing.
+- **Result screen** — guidance aligned with **Zagreb-style** bins (including mixed / residual where relevant in copy).
+- **Interactive map** — **Leaflet**; optional **Google Maps** tile layer; green islands and related POIs.
+- **Collection calendar** — Zagreb-oriented schedule, links to official sources, optional **Razvrstaj MojZG** address lookup.
+- **Profile &amp; gamification** — points per type, streaks, badges; Supabase stores aggregates and `waste_by_type` after scans.
+- **ECO assistant** — optional **Google Gemini** chat for recycling questions.
+- **i18n** — Croatian and English UI strings.
+
+---
+
+## Tech stack
+
+| Layer | Choice |
+|--------|--------|
 | UI | React 18, Tailwind CSS 4, Radix UI, Motion, Lucide |
 | Routing | React Router 7 |
 | Backend / auth | Supabase (Auth, Postgres, RLS, RPC) |
-| AI | Groq (sken), Google Generative AI (chat) |
-| Karta | Leaflet, react-leaflet, opc. Google Maps mutant |
+| Vision scan | Google Cloud Vision API |
+| Chat | Google Generative AI (Gemini) |
+| Map | Leaflet, react-leaflet, optional Google Maps mutant |
 
 ---
 
-## Brzi start
+## Quick start
 
 ```bash
 git clone <repo-url>
 cd CurosorHakaton1
 npm install
 cp .env.example .env
-# Uredi .env — obavezno Supabase URL i anon key
+# Edit .env — Supabase URL and anon key are required for auth/stats
 npm run dev
 ```
 
-Aplikacija je na `http://localhost:5173` (standardni Vite port).
+App runs at `http://localhost:5173` (default Vite port).
 
-### Produkcijski build
+### Production build
 
 ```bash
 npm run build
 ```
 
-Izlaz je u mapi `dist/`.
+Output is in `dist/`.
 
-### Ostalo
+### Other scripts
 
-- **`npm run build:zeleni`** — pomoćni skript za GeoJSON (zeleni otoci), ako ga koristite u workflowu.
-
----
-
-## Okolina (`.env`)
-
-Kopiraj `.env.example` u `.env` i postavi vrijednosti (`.env` je u `.gitignore`).
-
-| Varijabla | Obavezno | Opis |
-|-----------|----------|------|
-| `VITE_SUPABASE_URL` | da | URL projekta na Supabaseu |
-| `VITE_SUPABASE_ANON_KEY` | da | Anon (javni) ključ |
-| `VITE_GROQ_API_KEY` | ne | Sken / vision klasifikacija |
-| `VITE_GROQ_VISION_MODEL` | ne | Override modela (default u kodu) |
-| `VITE_GEMINI_API_KEY` | ne | EKO asistent |
-| `VITE_GEMINI_MODEL` | ne | Override Gemini modela |
-| `VITE_GOOGLE_MAPS_API_KEY` | ne | Google sloj na karti (inače OSM) |
-
-**Napomena:** `VITE_*` varijable ugrađuju se u klijentski bundle — za produkciju API ključeve za AI preporučljivo je držati iza vlastitog proxyja.
+- **`npm run build:zeleni`** — helper to build GeoJSON for green islands (if used in your workflow).
 
 ---
 
-## Baza (Supabase)
+## Environment (`.env`)
 
-Migracije su u `supabase/migrations/`. Uključuju tablicu `users`, trigger na registraciju, RPC `record_user_scan` (bodovi, niz, brojači po vrsti u `waste_by_type`), itd.
+Copy `.env.example` to `.env` (`.env` is gitignored).
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_SUPABASE_URL` | yes | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | yes | Supabase anon (public) key |
+| `VITE_GOOGLE_VISION_API_KEY` | no | Enables real scan classification via Vision API |
+| `VITE_GEMINI_API_KEY` | no | ECO assistant chat |
+| `VITE_GEMINI_MODEL` | no | Optional Gemini model override |
+| `VITE_GOOGLE_MAPS_API_KEY` | no | Google basemap on the map (otherwise OSM) |
+
+**Note:** `VITE_*` values are embedded in the client bundle. For production, prefer a small backend proxy for API keys instead of exposing them in the browser.
+
+Enable **Cloud Vision API** in Google Cloud Console for the project tied to `VITE_GOOGLE_VISION_API_KEY`.
+
+---
+
+## Database (Supabase)
+
+Migrations live in `supabase/migrations/` (users table, signup trigger, `record_user_scan` RPC with points, streak, `waste_by_type`, etc.).
 
 ```bash
-# lokalno / deploy prema vašem workflowu
 supabase db push
 ```
 
 ---
 
-## Struktura ruta
+## Routes
 
-| Put | Zaslon |
-|-----|--------|
-| `/login` | Prijava |
-| `/` | Sken |
-| `/map` | Karta |
-| `/calendar` | Kalendar |
-| `/profile` | Profil |
-| `/result/:category` | Rezultat nakon klasifikacije |
+| Path | Screen |
+|------|--------|
+| `/login` | Login |
+| `/` | Scan |
+| `/map` | Map |
+| `/calendar` | Calendar |
+| `/profile` | Profile |
+| `/result/:category` | Result after classification |
 
 ---
 
-## Tim
+## Team
 
 <p align="center">
   <strong>Josip Bušelić</strong> · <strong>Roko Matek</strong> · <strong>Jurica Šlibar</strong> · <strong>Fran Kramberger</strong>
 </p>
 
-<p align="center"><em>Hakaton / timski projekt — hvala cijelom timu na radu.</em></p>
+<p align="center"><em>Hackathon / team project — thanks to everyone who contributed.</em></p>
 
 ---
 
-## Licenca
+## License
 
-Privatni repozitorij (`private` u `package.json`). Za vanjsku upotrebu dodajte odgovarajuću licencu.
+Private repository (`private` in `package.json`). Add a license if you open-source the project.
