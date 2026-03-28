@@ -1,7 +1,8 @@
 /**
- * Loads data from data.zagreb.hr (GeoJSON + CKAN datastore) and recycling yards (ArcGIS).
- * Zeleni otoci: tabular only — coordinates via Photon (Komoot) geocoding, batched + cached in-module.
- * Dev: `vite.config` proxies `/api/zagreb`; Photon is called directly (CORS open).
+ * Loads data from data.zagreb.hr (GeoJSON), static zeleni otoci (public/data/zeleni-otoci.geojson),
+ * and recycling yards (ArcGIS).
+ * Regenerate zeleni GeoJSON: `npm run build:zeleni` (see scripts/build-zeleni-geojson.mjs).
+ * Dev: `vite.config` proxies `/api/zagreb` and `/api/arcgis`.
  */
 
 export const MAX_DISPLAYED_FACILITIES = 10;
@@ -19,10 +20,8 @@ const POLUPODZEMNI_GEOJSON =
 const RECYCLING_YARDS_GEOJSON =
   "/api/v3/datasets/249fa384ccf9481abf4fd2de73a822f5_0/downloads/data?format=geojson&spatialRefId=4326&where=1%3D1";
 
-const ZELENI_OTOCI_RESOURCE_ID = "5d15eae4-6aa7-426c-b02c-a8fdb3d61a74";
-
-const PHOTON_BATCH = 4;
-const PHOTON_BATCH_GAP_MS = 220;
+/** Built from scripts/data/zeleniotoci.csv via `npm run build:zeleni` */
+const ZELENI_OTOCI_GEOJSON = "/data/zeleni-otoci.geojson";
 
 function dataZagrebBase(): string {
   return import.meta.env.DEV ? "/api/zagreb" : "https://data.zagreb.hr";
@@ -147,143 +146,32 @@ async function fetchGeoJson(path: string, base: string): Promise<GeoJsonCollecti
   return parseCollection(await res.text());
 }
 
-const photonCache = new Map<string, { lat: number; lng: number } | null>();
-
-async function photonFetchJson(query: string): Promise<Response> {
-  return fetch(`https://photon.komoot.io/api?q=${encodeURIComponent(query)}&limit=1`);
+async function fetchZeleniOtociGeoJson(): Promise<GeoJsonCollection> {
+  const url = ZELENI_OTOCI_GEOJSON;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: ${res.status}`);
+  return parseCollection(await res.text());
 }
 
-async function photonGeocode(query: string): Promise<{ lat: number; lng: number } | null> {
-  const key = query.trim().toLowerCase();
-  if (photonCache.has(key)) return photonCache.get(key) ?? null;
-  try {
-    let res = await photonFetchJson(query);
-    if (res.status === 429) {
-      await new Promise((r) => setTimeout(r, 1300));
-      res = await photonFetchJson(query);
-    }
-    if (!res.ok) {
-      photonCache.set(key, null);
-      return null;
-    }
-    const data = (await res.json()) as {
-      features?: { geometry?: { coordinates?: number[] } }[];
-    };
-    const c = data.features?.[0]?.geometry?.coordinates;
-    if (!c || c.length < 2) {
-      photonCache.set(key, null);
-      return null;
-    }
-    const pt = { lng: c[0], lat: c[1] };
-    photonCache.set(key, pt);
-    return pt;
-  } catch {
-    photonCache.set(key, null);
-    return null;
-  }
-}
-
-async function geocodeUniqueQueries(queries: string[]): Promise<void> {
-  const seen = new Set<string>();
-  const unique: string[] = [];
-  for (const q of queries) {
-    const k = q.trim().toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    unique.push(q);
-  }
-  for (let i = 0; i < unique.length; i += PHOTON_BATCH) {
-    const chunk = unique.slice(i, i + PHOTON_BATCH);
-    await Promise.all(chunk.map((q) => photonGeocode(q)));
-    if (i + PHOTON_BATCH < unique.length) {
-      await new Promise((r) => setTimeout(r, PHOTON_BATCH_GAP_MS));
-    }
-  }
-}
-
-interface CkanDatastoreResponse {
-  success: boolean;
-  result?: {
-    records: Record<string, unknown>[];
-    total: number;
-  };
-}
-
-async function fetchAllDatastoreRows(resourceId: string): Promise<Record<string, unknown>[]> {
-  const base = dataZagrebBase();
-  const rows: Record<string, unknown>[] = [];
-  let offset = 0;
-  const limit = 400;
-  let pages = 0;
-  const maxPages = 25;
-
-  while (pages < maxPages) {
-    pages += 1;
-    const qs = new URLSearchParams({
-      resource_id: resourceId,
-      limit: String(limit),
-      offset: String(offset),
-    });
-    let res = await fetch(`${base}/api/3/action/datastore_search?${qs.toString()}`, {
-      headers: { Accept: "application/json" },
-    });
-    if (!res.ok && offset === 0) {
-      res = await fetch(`${base}/api/3/action/datastore_search`, {
-        method: "POST",
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
-        body: JSON.stringify({ resource_id: resourceId, limit, offset }),
-      });
-    }
-    if (!res.ok) throw new Error(`CKAN datastore: ${res.status}`);
-    const json = (await res.json()) as CkanDatastoreResponse;
-    if (!json.success || !json.result?.records) throw new Error("CKAN datastore: invalid response");
-    const batch = json.result.records;
-    rows.push(...batch);
-    const total = Number(json.result.total ?? 0);
-    if (batch.length === 0 || rows.length >= total) break;
-    offset += limit;
-  }
-  return rows;
-}
-
-type ZeleniPrepared = {
-  r: Record<string, unknown>;
-  primary: string;
-  fallback: string;
-};
-
-async function loadZeleniOtociFacilitiesInternal(): Promise<MapFacility[]> {
-  const records = await fetchAllDatastoreRows(ZELENI_OTOCI_RESOURCE_ID);
-  const prepared: ZeleniPrepared[] = [];
-  for (const r of records) {
-    const ulica = String(r.ULICA ?? "").trim();
-    if (!ulica) continue;
-    const opis = String(r["LOKACIJA (OPIS)"] ?? "").trim();
-    const primary = opis ? `${ulica}, ${opis}, Zagreb, Croatia` : `${ulica}, Zagreb, Croatia`;
-    const fallback = `${ulica}, Zagreb, Croatia`;
-    prepared.push({ r, primary, fallback });
-  }
-
-  const toPrefetch = new Set<string>();
-  for (const p of prepared) {
-    toPrefetch.add(p.primary);
-    if (p.primary.trim().toLowerCase() !== p.fallback.trim().toLowerCase()) {
-      toPrefetch.add(p.fallback);
-    }
-  }
-  await geocodeUniqueQueries([...toPrefetch]);
-
+export function facilitiesFromZeleniOtociGeoJson(fc: GeoJsonCollection): MapFacility[] {
   const list: MapFacility[] = [];
-  for (const { r, primary, fallback } of prepared) {
-    let pt = await photonGeocode(primary);
-    if (!pt && primary !== fallback) pt = await photonGeocode(fallback);
+  for (const f of fc.features ?? []) {
+    const pt = pointFromFeature(f);
     if (!pt) continue;
-    const ulica = String(r.ULICA ?? "").trim();
-    const cetvrt = String(r["GRADSKA EETVRT"] ?? "").trim();
-    const opis = String(r["LOKACIJA (OPIS)"] ?? "").trim();
-    const rid = r._id ?? Math.random();
-    const addressLine = [ulica, cetvrt].filter(Boolean).join(", ") || ulica;
-    const name = opis ? `Zeleni otok — ${ulica} (${opis})` : `Zeleni otok — ${ulica}`;
+    const p = f.properties ?? {};
+    const ulica = String(p.ULICA ?? "").trim();
+    const cetvrt = String(p["GRADSKA EETVRT"] ?? "").trim();
+    const opis = String(p["LOKACIJA (OPIS)"] ?? "").trim();
+    const row = p._sourceRow;
+    const rid = row != null && row !== "" ? String(row) : (f.id != null ? String(f.id) : Math.random());
+    const addressLine = [ulica, cetvrt].filter(Boolean).join(", ") || ulica || cetvrt || "Zagreb";
+    const name = ulica
+      ? opis
+        ? `Zeleni otok — ${ulica} (${opis})`
+        : `Zeleni otok — ${ulica}`
+      : opis
+        ? `Zeleni otok — ${opis}`
+        : `Zeleni otok — ${cetvrt || "Zagreb"}`;
     list.push({
       id: `zeleni-otok-${rid}`,
       kind: "green_island",
@@ -299,7 +187,12 @@ async function loadZeleniOtociFacilitiesInternal(): Promise<MapFacility[]> {
   return list;
 }
 
-/** Single flight + cache: avoids duplicate Photon storms under React Strict Mode. */
+async function loadZeleniOtociFacilitiesInternal(): Promise<MapFacility[]> {
+  const fc = await fetchZeleniOtociGeoJson();
+  return facilitiesFromZeleniOtociGeoJson(fc);
+}
+
+/** Single flight + cache: avoids duplicate fetches under React Strict Mode. */
 export async function loadZeleniOtociFacilities(): Promise<MapFacility[]> {
   if (zeleniFacilitiesCache !== null) return zeleniFacilitiesCache;
   if (zeleniInflight) return zeleniInflight;
