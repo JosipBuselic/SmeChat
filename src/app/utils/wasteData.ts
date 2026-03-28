@@ -1,6 +1,7 @@
 // Waste classification data for Zagreb
 
 import type { AppLocale } from "../context/LocaleContext";
+import { getZagrebCollectionRange } from "./zagrebCollection";
 
 export interface WasteCategory {
   id: string;
@@ -325,41 +326,8 @@ export interface CollectionDay {
   categories: string[];
 }
 
-export function getCollectionSchedule(): CollectionDay[] {
-  // Generate schedule for the next 14 days
-  const schedule: CollectionDay[] = [];
+export function getCollectionSchedule(zone = 1, days = 21): CollectionDay[] {
   const today = new Date();
-  
-  for (let i = 0; i < 14; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i);
-    const dayOfWeek = date.getDay();
-    
-    const categories: string[] = [];
-    
-    // Monday & Thursday: Plastic & Metal
-    if (dayOfWeek === 1 || dayOfWeek === 4) {
-      categories.push("plastic");
-    }
-    
-    // Tuesday & Friday: Paper
-    if (dayOfWeek === 2 || dayOfWeek === 5) {
-      categories.push("paper");
-    }
-    
-    // Wednesday: Glass
-    if (dayOfWeek === 3) {
-      categories.push("glass");
-    }
-    
-    // Daily: Bio & Mixed
-    categories.push("bio", "mixed");
-    
-    schedule.push({
-      date: date.toISOString().split("T")[0],
-      categories,
-    });
-  }
-  
-  return schedule;
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return getZagrebCollectionRange(start, days, zone);
 }

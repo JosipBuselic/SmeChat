@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle, X, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale } from "../context/LocaleContext";
-import { useUIStrings } from "../i18n/uiStrings";
-import { getGeminiEcoReply, isGeminiConfigured } from "../lib/gemini";
+import { formatStr, useUIStrings } from "../i18n/uiStrings";
+import { getGeminiEcoReply, getGeminiPrimaryModelId, isGeminiConfigured } from "../lib/gemini";
 
 interface Message {
   id: string;
@@ -262,6 +262,11 @@ export function RecycleChatbot() {
                   <Send className="w-5 h-5" />
                 </button>
               </div>
+              <p className="mt-2 text-center text-[10px] leading-tight text-gray-400">
+                {isGeminiConfigured()
+                  ? formatStr(ui.chat.poweredByGemini, { model: getGeminiPrimaryModelId() })
+                  : ui.chat.poweredByLocal}
+              </p>
             </div>
           </motion.div>
         )}

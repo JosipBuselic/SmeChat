@@ -88,6 +88,11 @@ function buildModelCandidates(): string[] {
   return [...MODEL_FALLBACK_CHAIN];
 }
 
+/** Model ID shown in UI (first tried; fallback chain may use another on errors). */
+export function getGeminiPrimaryModelId(): string {
+  return buildModelCandidates()[0];
+}
+
 export async function getGeminiEcoReply(messages: EcoChatTurn[]): Promise<string> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey?.length) {
