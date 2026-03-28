@@ -23,7 +23,12 @@ import {
 } from "../components/ui/sheet";
 import { useLocale } from "../context/LocaleContext";
 import { formatStr, useUIStrings } from "../i18n/uiStrings";
+<<<<<<< HEAD
 import { getUserStats, WASTE_TYPE_POINTS, REWARD_INFO, PROFILE_REWARD_IDS } from "../utils/storage";
+=======
+import { WASTE_TYPE_POINTS, BADGE_INFO } from "../utils/storage";
+import { useUserStats } from "../context/UserStatsContext";
+>>>>>>> c0f2a7e6ce6a1f06b9eae5770ba53878090313b7
 import { Progress } from "../components/ui/progress";
 import { useAuth } from "../context/AuthContext";
 import { cn } from "../components/ui/utils";
@@ -35,7 +40,7 @@ export function ProfileScreen() {
   const { locale, setLocale } = useLocale();
   const ui = useUIStrings();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const stats = getUserStats();
+  const { stats, loading: statsLoading } = useUserStats();
 
   const displayName =
     user?.user_metadata?.full_name ??
@@ -43,9 +48,10 @@ export function ProfileScreen() {
     user?.email?.split("@")[0] ??
     ui.profile.defaultName;
 
-  const currentLevel = Math.floor(stats.points / 100);
-  const pointsToNextLevel = 100 - (stats.points % 100);
-  const progressPercent = ((stats.points % 100) / 100) * 100;
+  const pointsForLevel = statsLoading ? 0 : stats.points;
+  const currentLevel = Math.floor(pointsForLevel / 100);
+  const pointsToNextLevel = 100 - (pointsForLevel % 100);
+  const progressPercent = ((pointsForLevel % 100) / 100) * 100;
 
   const wasteTypeData = [
     { type: "batteries" as const, color: "from-red-500 to-red-600" },
@@ -177,9 +183,11 @@ export function ProfileScreen() {
                 <Zap className="h-5 w-5 text-orange-500" fill="currentColor" />
               </div>
             </div>
-            <div className="mb-1 text-3xl font-bold text-gray-900">{stats.currentStreak}</div>
+            <div className="mb-1 text-3xl font-bold text-gray-900">
+              {statsLoading ? "—" : stats.currentStreak}
+            </div>
             <div className="text-sm text-gray-600">{ui.profile.streakDays}</div>
-            {stats.currentStreak > 0 && (
+            {!statsLoading && stats.currentStreak > 0 && (
               <div className="mt-1 text-xs font-semibold text-orange-600">{ui.profile.streakKeep}</div>
             )}
           </motion.div>
@@ -190,7 +198,9 @@ export function ProfileScreen() {
                 <TrendingUp className="h-5 w-5 text-green-600" />
               </div>
             </div>
-            <div className="mb-1 text-3xl font-bold text-gray-900">{stats.totalItems}</div>
+            <div className="mb-1 text-3xl font-bold text-gray-900">
+              {statsLoading ? "—" : stats.totalItems}
+            </div>
             <div className="text-sm text-gray-600">{ui.profile.sorted}</div>
           </motion.div>
 
@@ -200,7 +210,9 @@ export function ProfileScreen() {
                 <Trophy className="h-5 w-5 text-yellow-600" />
               </div>
             </div>
-            <div className="mb-1 text-3xl font-bold text-gray-900">{stats.points}</div>
+            <div className="mb-1 text-3xl font-bold text-gray-900">
+              {statsLoading ? "—" : stats.points}
+            </div>
             <div className="text-sm text-gray-600">{ui.profile.pointsTotal}</div>
           </motion.div>
 
@@ -210,7 +222,9 @@ export function ProfileScreen() {
                 <Award className="h-5 w-5 text-blue-600" />
               </div>
             </div>
-            <div className="mb-1 text-3xl font-bold text-gray-900">{stats.ecoScore}</div>
+            <div className="mb-1 text-3xl font-bold text-gray-900">
+              {statsLoading ? "—" : stats.ecoScore}
+            </div>
             <div className="text-sm text-gray-600">{ui.profile.ecoScore}</div>
           </motion.div>
         </div>
@@ -223,7 +237,7 @@ export function ProfileScreen() {
 
           <div className="space-y-3">
             {wasteTypeData.map((wasteType) => {
-              const count = stats.wasteTypes[wasteType.type];
+              const count = statsLoading ? 0 : stats.wasteTypes[wasteType.type];
               const points = count * WASTE_TYPE_POINTS[wasteType.type];
               const cat = getWasteCategory(wasteType.type, locale);
 
@@ -263,12 +277,21 @@ export function ProfileScreen() {
           </h3>
           <p className="mb-4 text-sm text-gray-600">{ui.profile.rewardsSubtitle}</p>
 
+<<<<<<< HEAD
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {PROFILE_REWARD_IDS.map((rewardId) => {
               const reward = ui.rewards[rewardId];
               const meta = REWARD_INFO[rewardId];
               const isUnlocked = stats.rewards.includes(rewardId);
               if (!reward || !meta) return null;
+=======
+          <div className="grid grid-cols-3 gap-3">
+            {PROFILE_BADGE_IDS.map((badgeId) => {
+              const badge = ui.badges[badgeId];
+              const meta = BADGE_INFO[badgeId];
+              const isUnlocked = !statsLoading && stats.badges.includes(badgeId);
+              if (!badge || !meta) return null;
+>>>>>>> c0f2a7e6ce6a1f06b9eae5770ba53878090313b7
 
               return (
                 <motion.div
@@ -326,7 +349,9 @@ export function ProfileScreen() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">💧</div>
                 <div>
                   <div className="font-semibold text-gray-900">{ui.profile.water}</div>
-                  <div className="text-sm text-gray-600">~{stats.totalItems * 50}L</div>
+                  <div className="text-sm text-gray-600">
+                    ~{statsLoading ? 0 : stats.totalItems * 50}L
+                  </div>
                 </div>
               </div>
             </div>
@@ -336,7 +361,9 @@ export function ProfileScreen() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100">🌳</div>
                 <div>
                   <div className="font-semibold text-gray-900">{ui.profile.trees}</div>
-                  <div className="text-sm text-gray-600">~{Math.floor(stats.totalItems / 10)}</div>
+                  <div className="text-sm text-gray-600">
+                    ~{statsLoading ? 0 : Math.floor(stats.totalItems / 10)}
+                  </div>
                 </div>
               </div>
             </div>
@@ -346,7 +373,9 @@ export function ProfileScreen() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-100">⚡</div>
                 <div>
                   <div className="font-semibold text-gray-900">{ui.profile.energy}</div>
-                  <div className="text-sm text-gray-600">~{stats.totalItems * 2}kWh</div>
+                  <div className="text-sm text-gray-600">
+                    ~{statsLoading ? 0 : stats.totalItems * 2}kWh
+                  </div>
                 </div>
               </div>
             </div>

@@ -15,6 +15,7 @@ export function ScanScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const stats = getUserStats();
+  const { stats, loading: statsLoading } = useUserStats();
   
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -54,11 +55,15 @@ export function ScanScreen() {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1 bg-orange-100 px-3 py-1 rounded-full">
                 <Zap className="w-4 h-4 text-orange-500" fill="currentColor" />
-                <span className="text-sm font-bold text-orange-600">{stats.currentStreak}</span>
+                <span className="text-sm font-bold text-orange-600">
+                  {statsLoading ? "—" : stats.currentStreak}
+                </span>
               </div>
               <div className="flex items-center gap-1 bg-green-100 px-3 py-1 rounded-full">
                 <Sparkles className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-bold text-green-700">{stats.points}</span>
+                <span className="text-sm font-bold text-green-700">
+                  {statsLoading ? "—" : stats.points}
+                </span>
               </div>
             </div>
           </div>
@@ -160,16 +165,27 @@ export function ScanScreen() {
           className="mt-6 grid grid-cols-3 gap-4"
         >
           <div className="bg-white rounded-xl shadow-sm p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.totalItems}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {statsLoading ? "—" : stats.totalItems}
+            </div>
             <div className="text-xs text-gray-500 mt-1">{ui.scan.statSorted}</div>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{stats.currentStreak}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {statsLoading ? "—" : stats.currentStreak}
+            </div>
             <div className="text-xs text-gray-500 mt-1">{ui.scan.statStreak}</div>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4 text-center">
+<<<<<<< HEAD
             <div className="text-2xl font-bold text-yellow-600">{stats.rewards.length}</div>
             <div className="text-xs text-gray-500 mt-1">{ui.scan.statRewards}</div>
+=======
+            <div className="text-2xl font-bold text-yellow-600">
+              {statsLoading ? "—" : stats.badges.length}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">{ui.scan.statBadges}</div>
+>>>>>>> c0f2a7e6ce6a1f06b9eae5770ba53878090313b7
           </div>
         </motion.div>
       </div>
