@@ -86,14 +86,30 @@ export type UIStrings = {
   };
   map: {
     title: string;
-    subtitle: string;
-    mapCity: string;
-    mapSoon: string;
-    allLocations: string;
+    dataSubtitle: string;
+    mapHintWithLocation: string;
+    mapHintNoLocation: string;
+    osmSuffix: string;
+    loadErrorTitle: string;
+    loadErrorGeneric: string;
+    binAccessTitle: string;
+    binAccessBody: string;
+    nearestTitle: string;
     nearMe: string;
+    loadingLocations: string;
+    noLocations: string;
+    openMaps: string;
     legendTitle: string;
-    legendCenter: string;
-    legendBins: string;
+    legendGreenIsland: string;
+    legendRecyclingYard: string;
+    legendUnderground: string;
+    legendSemiUnderground: string;
+    legendYou: string;
+    toastNearMeOk: string;
+    toastNearMeFail: string;
+    mapLoading: string;
+    mapYou: string;
+    mapYourLocation: string;
   };
   login: {
     supabaseTitle: string;
@@ -278,14 +294,33 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
     },
     map: {
       title: "Lokacije u blizini",
-      subtitle: "Kontejneri i reciklažna dvorišta",
-      mapCity: "Zagreb, Hrvatska",
-      mapSoon: "Interaktivna karta (uskoro)",
-      allLocations: "Sve lokacije",
+      dataSubtitle: "Zagreb — otvoreni podaci (data.zagreb.hr)",
+      mapHintWithLocation:
+        "Vaša pozicija je na karti; popis je poredan prema udaljenosti od vas.",
+      mapHintNoLocation:
+        "Lokacija nedostupna — poredano od središta grada. Dodirnite „U blizini“ za ponovni pokušaj.",
+      osmSuffix: "· OpenStreetMap",
+      loadErrorTitle: "Greška podataka",
+      loadErrorGeneric: "Učitavanje lokacija nije uspjelo",
+      binAccessTitle: "Pristup spremnicima",
+      binAccessBody:
+        "Podzemni i polupodzemni spremnici mogu biti zaključani ili namijenjeni stanovnicima — provjerite na licu mjesta prije odlaska.",
+      nearestTitle: "Najbliža mjesta",
       nearMe: "U blizini",
+      loadingLocations: "Učitavanje lokacija…",
+      noLocations: "Nema lokacija za prikaz.",
+      openMaps: "Karta",
       legendTitle: "Legenda",
-      legendCenter: "Reciklažno dvorište",
-      legendBins: "Stanica s kontejnerima",
+      legendGreenIsland: "Zeleni otok — staklo / metal / papir",
+      legendRecyclingYard: "Reciklažno dvorište",
+      legendUnderground: "Podzemni spremnik",
+      legendSemiUnderground: "Polupodzemni spremnik",
+      legendYou: "Vi (vaša pozicija kada je lokacija uključena)",
+      toastNearMeOk: "Poredano prema vašoj lokaciji",
+      toastNearMeFail: "Lokacija nije dostupna. Provjerite dozvole preglednika.",
+      mapLoading: "Učitavanje karte…",
+      mapYou: "Vi",
+      mapYourLocation: "Vaša lokacija",
     },
     login: {
       supabaseTitle: "Supabase nije podešen",
@@ -432,14 +467,32 @@ export const UI_STRINGS: Record<"hr" | "en", UIStrings> = {
     },
     map: {
       title: "Nearby locations",
-      subtitle: "Bins and recycling centres",
-      mapCity: "Zagreb, Croatia",
-      mapSoon: "Interactive map (coming soon)",
-      allLocations: "All locations",
+      dataSubtitle: "Zagreb — open data (data.zagreb.hr)",
+      mapHintWithLocation: "Your position is on the map; the list is sorted by distance from you.",
+      mapHintNoLocation:
+        "Location unavailable — sorted from the city centre. Tap Near me to try again.",
+      osmSuffix: "· OpenStreetMap",
+      loadErrorTitle: "Data error",
+      loadErrorGeneric: "Could not load locations",
+      binAccessTitle: "Bin access",
+      binAccessBody:
+        "Underground and semi-underground bins may be locked or for residents only — check on site before you go.",
+      nearestTitle: "Nearest places",
       nearMe: "Near me",
+      loadingLocations: "Loading locations…",
+      noLocations: "No locations to show.",
+      openMaps: "Maps",
       legendTitle: "Legend",
-      legendCenter: "Recycling centre",
-      legendBins: "Bin station",
+      legendGreenIsland: "Green island — glass / metal / paper",
+      legendRecyclingYard: "Recycling yard",
+      legendUnderground: "Underground bin",
+      legendSemiUnderground: "Semi-underground bin",
+      legendYou: "You (your position when location is on)",
+      toastNearMeOk: "Sorted by your location",
+      toastNearMeFail: "Could not get your location. Check browser permissions.",
+      mapLoading: "Loading map…",
+      mapYou: "You",
+      mapYourLocation: "Your location",
     },
     login: {
       supabaseTitle: "Supabase not configured",

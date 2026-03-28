@@ -10,6 +10,7 @@ import {
   useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { useUIStrings } from "../i18n/uiStrings";
 import { ZAGREB_CENTER, type MapFacility } from "../utils/zagrebOpenData";
 
 const OSM_ATTRIBUTION =
@@ -90,11 +91,14 @@ export function ZagrebFacilitiesMap({
   userPos,
   loading,
 }: ZagrebFacilitiesMapProps) {
+  const ui = useUIStrings();
+  const m = ui.map;
+
   if (loading) {
     return (
       <div className="relative h-[min(52vh,22rem)] w-full rounded-2xl bg-slate-200 flex flex-col items-center justify-center gap-2 border border-slate-200/90 shadow-md">
         <Loader2 className="w-8 h-8 text-slate-500 animate-spin" aria-hidden />
-        <span className="text-sm text-slate-600">Loading map…</span>
+        <span className="text-sm text-slate-600">{m.mapLoading}</span>
       </div>
     );
   }
@@ -128,9 +132,9 @@ export function ZagrebFacilitiesMap({
               opacity={1}
               className="user-location-label"
             >
-              You
+              {m.mapYou}
             </Tooltip>
-            <Popup>Your location</Popup>
+            <Popup>{m.mapYourLocation}</Popup>
           </CircleMarker>
         )}
         {facilities.map((f) => {

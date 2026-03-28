@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Leaf, Loader2, Navigation, Recycle, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { USER_LOCATION_MARKER, ZagrebFacilitiesMap } from "../components/ZagrebFacilitiesMap";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
-import { WASTE_CATEGORIES } from "../utils/wasteData";
+import { useLocale } from "../context/LocaleContext";
+import { useUIStrings } from "../i18n/uiStrings";
+import { getWasteCategory } from "../utils/wasteData";
 import {
   loadAllZagrebFacilities,
   MAX_DISPLAYED_FACILITIES,
@@ -34,6 +36,10 @@ function openDirections(f: MapFacility) {
 }
 
 export function MapScreen() {
+  const { locale } = useLocale();
+  const ui = useUIStrings();
+  const m = ui.map;
+
   const [allFacilities, setAllFacilities] = useState<MapFacility[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadingData, setLoadingData] = useState(true);
@@ -52,7 +58,7 @@ export function MapScreen() {
         setAllFacilities(facilities);
       } catch (e) {
         if (cancelled) return;
-        setLoadError(e instanceof Error ? e.message : "Could not load locations");
+        setLoadError(e instanceof Error ? e.message : m.loadErrorGeneric);
         setAllFacilities([]);
       } finally {
         if (!cancelled) setLoadingData(false);
@@ -101,18 +107,18 @@ export function MapScreen() {
     });
   }, [displayed]);
 
-  const onNearMe = useCallback(async () => {
+  async function onNearMe() {
     setGeoWorking(true);
     try {
       const pos = await requestUserLocation({ maximumAge: 0 });
       setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      toast.success("Sorted by your location");
+      toast.success(m.toastNearMeOk);
     } catch {
-      toast.error("Could not get your location. Check browser permissions.");
+      toast.error(m.toastNearMeFail);
     } finally {
       setGeoWorking(false);
     }
-  }, []);
+  }
 
   const showContainerAccessWarning = displayed.some((f) => f.mayRequireResidentAccess);
 
@@ -120,15 +126,15 @@ export function MapScreen() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Nearby Locations</h1>
-          <p className="text-sm text-gray-600 mt-1">Zagreb — open data (data.zagreb.hr)</p>
+          <h1 className="text-2xl font-bold text-gray-900">{m.title}</h1>
+          <p className="text-sm text-gray-600 mt-1">{m.dataSubtitle}</p>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 pt-4 space-y-3">
         {loadError && (
           <Alert variant="destructive" className="border-red-200 bg-red-50">
-            <AlertTitle>Data error</AlertTitle>
+            <AlertTitle>{m.loadErrorTitle}</AlertTitle>
             <AlertDescription className="text-red-800">{loadError}</AlertDescription>
           </Alert>
         )}
@@ -136,21 +142,15 @@ export function MapScreen() {
         {showContainerAccessWarning && !loadError && (
           <Alert className="border-amber-200 bg-amber-50 text-amber-950 [&>svg]:text-amber-700">
             <AlertTriangle className="text-amber-700" />
-            <AlertTitle>Bin access</AlertTitle>
-            <AlertDescription className="text-amber-900/90 text-xs leading-snug">
-              Underground and semi-underground bins may be locked or for residents only—check on site before
-              you go.
-            </AlertDescription>
+            <AlertTitle>{m.binAccessTitle}</AlertTitle>
+            <AlertDescription className="text-amber-900/90 text-xs leading-snug">{m.binAccessBody}</AlertDescription>
           </Alert>
         )}
       </div>
 
       <div className="max-w-md mx-auto px-4">
         <p className="text-xs text-gray-500 mb-2 text-center">
-          {userPos
-            ? "Your position is on the map; list sorted by distance from you."
-            : "Location unavailable—sorted from city center. Tap Near me to try again."}{" "}
-          · OpenStreetMap
+          {userPos ? m.mapHintWithLocation : m.mapHintNoLocation} {m.osmSuffix}
         </p>
         <ZagrebFacilitiesMap
           facilities={displayed}
@@ -163,7 +163,7 @@ export function MapScreen() {
 
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-4 gap-2">
-          <h2 className="font-bold text-gray-900">Nearest places</h2>
+          <h2 className="font-bold text-gray-900">{m.nearestTitle}</h2>
           <button
             type="button"
             disabled={geoWorking || loadingData}
@@ -175,7 +175,7 @@ export function MapScreen() {
             ) : (
               <Navigation className="w-4 h-4" />
             )}
-            Near me
+            {m.nearMe}
           </button>
         </div>
 
@@ -183,11 +183,11 @@ export function MapScreen() {
           {loadingData && (
             <p className="text-sm text-gray-500 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Loading locations…
+              {m.loadingLocations}
             </p>
           )}
           {!loadingData && displayed.length === 0 && !loadError && (
-            <p className="text-sm text-gray-500">No locations to show.</p>
+            <p className="text-sm text-gray-500">{m.noLocations}</p>
           )}
           {displayed.map((location) => (
             <motion.button
@@ -232,7 +232,7 @@ export function MapScreen() {
 
                   <div className="flex flex-wrap gap-1">
                     {location.accepts.map((categoryId) => {
-                      const category = WASTE_CATEGORIES[categoryId];
+                      const category = getWasteCategory(categoryId, locale);
                       if (!category) return null;
                       return (
                         <span
@@ -262,7 +262,7 @@ export function MapScreen() {
                     }}
                     className="text-[11px] text-green-600 font-medium"
                   >
-                    Maps
+                    {m.openMaps}
                   </button>
                 </div>
               </div>
@@ -271,31 +271,31 @@ export function MapScreen() {
         </div>
 
         <div className="mt-6 bg-white rounded-2xl shadow-sm p-4">
-          <h3 className="font-semibold text-gray-900 mb-3 text-sm">Legend</h3>
+          <h3 className="font-semibold text-gray-900 mb-3 text-sm">{m.legendTitle}</h3>
           <div className="grid grid-cols-1 gap-2.5 text-xs text-gray-600">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <Leaf className="w-4 h-4 text-emerald-600" strokeWidth={2} />
               </div>
-              <span>Green island — glass / metal / paper</span>
+              <span>{m.legendGreenIsland}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-teal-100 rounded-lg flex items-center justify-center">
                 <Recycle className="w-4 h-4 text-teal-600" />
               </div>
-              <span>Recycling yard</span>
+              <span>{m.legendRecyclingYard}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Trash2 className="w-4 h-4 text-blue-600" />
               </div>
-              <span>Underground bin</span>
+              <span>{m.legendUnderground}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center">
                 <Trash2 className="w-4 h-4 text-amber-600" />
               </div>
-              <span>Semi-underground bin</span>
+              <span>{m.legendSemiUnderground}</span>
             </div>
             <div className="flex items-center gap-2">
               <div
@@ -306,7 +306,7 @@ export function MapScreen() {
                 }}
                 aria-hidden
               />
-              <span>You (your position when location is on)</span>
+              <span>{m.legendYou}</span>
             </div>
           </div>
         </div>
