@@ -1,105 +1,235 @@
-import { useState } from "react";
-import { MapPin, Navigation, Trash2, Recycle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, Leaf, Loader2, Navigation, Recycle, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
+import { toast } from "sonner";
 import { BottomNavigation } from "../components/BottomNavigation";
+import { USER_LOCATION_MARKER, ZagrebFacilitiesMap } from "../components/ZagrebFacilitiesMap";
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { useLocale } from "../context/LocaleContext";
 import { useUIStrings } from "../i18n/uiStrings";
-import { RECYCLING_LOCATIONS, getWasteCategory } from "../utils/wasteData";
+import { getWasteCategory } from "../utils/wasteData";
+import {
+  loadAllZagrebFacilities,
+  MAX_DISPLAYED_FACILITIES,
+  selectNearestWithGreenIslandsPriority,
+  type MapFacility,
+  ZAGREB_CENTER,
+} from "../utils/zagrebOpenData";
+
+function requestUserLocation(options?: { maximumAge?: number }): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15_000,
+      maximumAge: options?.maximumAge ?? 60_000,
+    });
+  });
+}
+
+function openDirections(f: MapFacility) {
+  const q = `${f.lat},${f.lng}`;
+  window.open(`https://www.google.com/maps?q=${encodeURIComponent(q)}`, "_blank", "noopener,noreferrer");
+}
 
 export function MapScreen() {
   const { locale } = useLocale();
   const ui = useUIStrings();
-  const [selectedLocation, setSelectedLocation] = useState(RECYCLING_LOCATIONS[0]);
-  
+  const m = ui.map;
+
+  const [allFacilities, setAllFacilities] = useState<MapFacility[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadingData, setLoadingData] = useState(true);
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoWorking, setGeoWorking] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<MapFacility | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoadingData(true);
+      setLoadError(null);
+      try {
+        const { facilities } = await loadAllZagrebFacilities();
+        if (cancelled) return;
+        setAllFacilities(facilities);
+      } catch (e) {
+        if (cancelled) return;
+        setLoadError(e instanceof Error ? e.message : m.loadErrorGeneric);
+        setAllFacilities([]);
+      } finally {
+        if (!cancelled) setLoadingData(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const pos = await requestUserLocation();
+        if (!cancelled) {
+          setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        }
+      } catch {
+        /* city center until Near me */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const sortOrigin = userPos ?? ZAGREB_CENTER;
+
+  const displayed = useMemo(
+    () =>
+      selectNearestWithGreenIslandsPriority(
+        allFacilities,
+        sortOrigin.lat,
+        sortOrigin.lng,
+        MAX_DISPLAYED_FACILITIES,
+      ),
+    [allFacilities, sortOrigin.lat, sortOrigin.lng],
+  );
+
+  useEffect(() => {
+    if (displayed.length === 0) return;
+    setSelectedLocation((prev) => {
+      if (prev && displayed.some((d) => d.id === prev.id)) return prev;
+      return displayed[0];
+    });
+  }, [displayed]);
+
+  async function onNearMe() {
+    setGeoWorking(true);
+    try {
+      const pos = await requestUserLocation({ maximumAge: 0 });
+      setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      toast.success(m.toastNearMeOk);
+    } catch {
+      toast.error(m.toastNearMeFail);
+    } finally {
+      setGeoWorking(false);
+    }
+  }
+
+  const showContainerAccessWarning = displayed.some((f) => f.mayRequireResidentAccess);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">{ui.map.title}</h1>
-          <p className="text-sm text-gray-600 mt-1">{ui.map.subtitle}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{m.title}</h1>
+          <p className="text-sm text-gray-600 mt-1">{m.dataSubtitle}</p>
         </div>
       </div>
-      
-      {/* Map Placeholder */}
-      <div className="max-w-md mx-auto">
-        <div className="relative bg-gradient-to-br from-green-100 to-blue-100 h-64 flex items-center justify-center">
-          <div className="text-center">
-            <MapPin className="w-12 h-12 text-green-600 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">{ui.map.mapCity}</p>
-            <p className="text-xs text-gray-500 mt-1">{ui.map.mapSoon}</p>
-          </div>
-          
-          {/* Map markers simulation */}
-          {RECYCLING_LOCATIONS.slice(0, 3).map((location, index) => (
-            <motion.div
-              key={location.id}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-              className="absolute"
-              style={{
-                top: `${30 + index * 20}%`,
-                left: `${40 + index * 10}%`,
-              }}
-            >
-              <button
-                onClick={() => setSelectedLocation(location)}
-                className={`w-8 h-8 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 ${
-                  selectedLocation.id === location.id
-                    ? "bg-green-500 ring-4 ring-green-200"
-                    : "bg-white"
-                }`}
-              >
-                {location.type === "center" ? (
-                  <Recycle className={`w-4 h-4 ${selectedLocation.id === location.id ? "text-white" : "text-green-600"}`} />
-                ) : (
-                  <Trash2 className={`w-4 h-4 ${selectedLocation.id === location.id ? "text-white" : "text-blue-600"}`} />
-                )}
-              </button>
-            </motion.div>
-          ))}
-        </div>
+
+      <div className="max-w-md mx-auto px-4 pt-4 space-y-3">
+        {loadError && (
+          <Alert variant="destructive" className="border-red-200 bg-red-50">
+            <AlertTitle>{m.loadErrorTitle}</AlertTitle>
+            <AlertDescription className="text-red-800">{loadError}</AlertDescription>
+          </Alert>
+        )}
+
+        {showContainerAccessWarning && !loadError && (
+          <Alert className="border-amber-200 bg-amber-50 text-amber-950 [&>svg]:text-amber-700">
+            <AlertTriangle className="text-amber-700" />
+            <AlertTitle>{m.binAccessTitle}</AlertTitle>
+            <AlertDescription className="text-amber-900/90 text-xs leading-snug">{m.binAccessBody}</AlertDescription>
+          </Alert>
+        )}
       </div>
-      
-      {/* Locations List */}
+
+      <div className="max-w-md mx-auto px-4">
+        <p className="text-xs text-gray-500 mb-2 text-center">
+          {userPos ? m.mapHintWithLocation : m.mapHintNoLocation} {m.osmSuffix}
+        </p>
+        <ZagrebFacilitiesMap
+          facilities={displayed}
+          selectedId={selectedLocation?.id ?? null}
+          onSelect={setSelectedLocation}
+          userPos={userPos}
+          loading={loadingData}
+        />
+      </div>
+
       <div className="max-w-md mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-gray-900">{ui.map.allLocations}</h2>
-          <button type="button" className="flex items-center gap-1 text-sm text-green-600 font-semibold">
-            <Navigation className="w-4 h-4" />
-            {ui.map.nearMe}
+        <div className="flex items-center justify-between mb-4 gap-2">
+          <h2 className="font-bold text-gray-900">{m.nearestTitle}</h2>
+          <button
+            type="button"
+            disabled={geoWorking || loadingData}
+            onClick={onNearMe}
+            className="flex items-center gap-1 text-sm text-green-600 font-semibold disabled:opacity-50 shrink-0"
+          >
+            {geoWorking ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Navigation className="w-4 h-4" />
+            )}
+            {m.nearMe}
           </button>
         </div>
-        
+
         <div className="space-y-3">
-          {RECYCLING_LOCATIONS.map((location) => (
+          {loadingData && (
+            <p className="text-sm text-gray-500 flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {m.loadingLocations}
+            </p>
+          )}
+          {!loadingData && displayed.length === 0 && !loadError && (
+            <p className="text-sm text-gray-500">{m.noLocations}</p>
+          )}
+          {displayed.map((location) => (
             <motion.button
               key={location.id}
+              type="button"
               whileTap={{ scale: 0.98 }}
               onClick={() => setSelectedLocation(location)}
               className={`w-full text-left bg-white rounded-2xl shadow-md p-4 transition-all ${
-                selectedLocation.id === location.id
+                selectedLocation?.id === location.id
                   ? "ring-2 ring-green-500 shadow-lg"
                   : "hover:shadow-lg"
               }`}
             >
               <div className="flex gap-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  location.type === "center" ? "bg-green-100" : "bg-blue-100"
-                }`}>
-                  {location.type === "center" ? (
-                    <Recycle className="w-6 h-6 text-green-600" />
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                    location.kind === "green_island"
+                      ? "bg-emerald-100"
+                      : location.kind === "recycling_yard"
+                        ? "bg-teal-100"
+                        : location.kind === "semi_underground_bin"
+                          ? "bg-amber-100"
+                          : "bg-blue-100"
+                  }`}
+                >
+                  {location.kind === "green_island" ? (
+                    <Leaf className="w-6 h-6 text-emerald-600" strokeWidth={2} />
+                  ) : location.kind === "recycling_yard" ? (
+                    <Recycle className="w-6 h-6 text-teal-600" />
                   ) : (
-                    <Trash2 className="w-6 h-6 text-blue-600" />
+                    <Trash2
+                      className={`w-6 h-6 ${
+                        location.kind === "semi_underground_bin" ? "text-amber-600" : "text-blue-600"
+                      }`}
+                    />
                   )}
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 mb-1">{location.name}</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1 leading-snug">{location.name}</h3>
                   <p className="text-sm text-gray-600 mb-2">{location.address}</p>
-                  
-                  {/* Accepted waste types */}
+
                   <div className="flex flex-wrap gap-1">
                     {location.accepts.map((categoryId) => {
                       const category = getWasteCategory(categoryId, locale);
@@ -119,37 +249,69 @@ export function MapScreen() {
                     })}
                   </div>
                 </div>
-                
-                <div className="text-right flex-shrink-0">
+
+                <div className="text-right shrink-0 flex flex-col items-end gap-1">
                   <span className="text-xs font-semibold text-gray-900">
-                    {(Math.random() * 2 + 0.5).toFixed(1)} km
+                    {location.distanceKm != null ? `${location.distanceKm.toFixed(1)} km` : "—"}
                   </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openDirections(location);
+                    }}
+                    className="text-[11px] text-green-600 font-medium"
+                  >
+                    {m.openMaps}
+                  </button>
                 </div>
               </div>
             </motion.button>
           ))}
         </div>
-        
-        {/* Legend */}
+
         <div className="mt-6 bg-white rounded-2xl shadow-sm p-4">
-          <h3 className="font-semibold text-gray-900 mb-3 text-sm">{ui.map.legendTitle}</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <h3 className="font-semibold text-gray-900 mb-3 text-sm">{m.legendTitle}</h3>
+          <div className="grid grid-cols-1 gap-2.5 text-xs text-gray-600">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
-                <Recycle className="w-4 h-4 text-green-600" />
+              <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <Leaf className="w-4 h-4 text-emerald-600" strokeWidth={2} />
               </div>
-              <span className="text-xs text-gray-600">{ui.map.legendCenter}</span>
+              <span>{m.legendGreenIsland}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-teal-100 rounded-lg flex items-center justify-center">
+                <Recycle className="w-4 h-4 text-teal-600" />
+              </div>
+              <span>{m.legendRecyclingYard}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Trash2 className="w-4 h-4 text-blue-600" />
               </div>
-              <span className="text-xs text-gray-600">{ui.map.legendBins}</span>
+              <span>{m.legendUnderground}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center">
+                <Trash2 className="w-4 h-4 text-amber-600" />
+              </div>
+              <span>{m.legendSemiUnderground}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div
+                className="w-6 h-6 rounded-full border-[3px] shrink-0 box-border"
+                style={{
+                  borderColor: USER_LOCATION_MARKER.stroke,
+                  backgroundColor: USER_LOCATION_MARKER.fill,
+                }}
+                aria-hidden
+              />
+              <span>{m.legendYou}</span>
             </div>
           </div>
         </div>
       </div>
-      
+
       <BottomNavigation />
     </div>
   );
