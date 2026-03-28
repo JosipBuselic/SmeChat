@@ -14,7 +14,6 @@
 
 **SmeChat** is a mobile-first web app for **household waste sorting**, focused on **Zagreb** (bin colours, collection calendar, useful locations). Users take a photo of waste, get a **category suggestion** powered by **Google Cloud Vision** (label detection mapped to local bin categories), learn where to dispose of it, and earn **points, badges, and per-type stats** — backed by **Supabase** authentication and profile data.
 
-> Visual design started from the [Snap&amp;Sort Figma bundle](https://www.figma.com/design/WNyvu6PY8MPDS9oPJ0V7jg/Snap-Sort-App-Design); the shipped product is **SmeChat**.
 
 ---
 
